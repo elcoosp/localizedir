@@ -53,9 +53,6 @@ pub fn localizedir(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     let enum_name = &input.ident;
-
-    // Extract the parent folder from the enum name
-    // e.g., "AuthDirs" -> "auth", "EmailDirs" -> "email"
     let parent_folder = extract_parent_folder(enum_name.to_string());
 
     let variants = match &input.data {
@@ -63,7 +60,6 @@ pub fn localizedir(attr: TokenStream, item: TokenStream) -> TokenStream {
         _ => panic!("localizedir can only be used on enums"),
     };
 
-    // Check for unit variants only
     for variant in variants {
         match &variant.fields {
             Fields::Unit => {}
@@ -71,20 +67,18 @@ pub fn localizedir(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     }
 
-    // Dynamically discover available locales from the filesystem
     let locales = discover_locales(&base_path_str).expect(&format!(
         "Failed to discover locales in path: {}",
         base_path_str
     ));
 
-    // Generate match arms for each variant and locale combination
     let match_arms: Vec<_> = variants.iter().flat_map(|variant| {
         let variant_name = &variant.ident;
-        let dir_name = variant_name.to_string().to_lowercase();
+        let dir_name = variant_to_dir_name(&variant_name.to_string());
 
         locales.iter().map(|locale| {
             let static_name = syn::Ident::new(
-                &format!("{}_{}", dir_name.to_uppercase(), locale.to_uppercase()),
+                &format!("{}_{}", dir_name.to_uppercase().replace('_', ""), locale.to_uppercase()),
                 variant_name.span()
             );
 
@@ -93,7 +87,6 @@ pub fn localizedir(attr: TokenStream, item: TokenStream) -> TokenStream {
                 base_path_str, locale, parent_folder, dir_name
             );
 
-            // Verify the path exists at compile time
             if !Path::new(&full_path).exists() {
                 panic!(
                     "Directory not found: {}. Make sure the directory structure matches the expected pattern.",
@@ -111,24 +104,16 @@ pub fn localizedir(attr: TokenStream, item: TokenStream) -> TokenStream {
         }).collect::<Vec<_>>()
     }).collect();
 
-    // Collect variant names and identifiers for the dir_name match
     let variant_names: Vec<_> = variants.iter().map(|v| &v.ident).collect();
     let variant_dir_names: Vec<_> = variants
         .iter()
-        .map(|v| v.ident.to_string().to_lowercase())
+        .map(|v| variant_to_dir_name(&v.ident.to_string()))
         .collect();
 
     let output = quote! {
         #input
 
         impl #enum_name {
-            /// Returns a reference to the localized directory for the given locale
-            ///
-            /// # Arguments
-            /// * `locale` - The locale string (e.g., "en", "fr", "es")
-            ///
-            /// # Panics
-            /// Panics if the locale is not supported
             pub fn to_localized_dir(&self, locale: &str) -> &'static include_dir::Dir<'static> {
                 match (self, locale) {
                     #(#match_arms)*
@@ -136,17 +121,14 @@ pub fn localizedir(attr: TokenStream, item: TokenStream) -> TokenStream {
                 }
             }
 
-            /// Returns all available locales for this directory set
             pub fn available_locales() -> &'static [&'static str] {
                 &[#(#locales),*]
             }
 
-            /// Returns the parent folder name for this directory set
             pub fn parent_folder() -> &'static str {
                 #parent_folder
             }
 
-            /// Returns the directory name for this variant (lowercase)
             pub fn dir_name(&self) -> &'static str {
                 match self {
                     #(#enum_name::#variant_names => #variant_dir_names,)*
@@ -158,8 +140,34 @@ pub fn localizedir(attr: TokenStream, item: TokenStream) -> TokenStream {
     TokenStream::from(output)
 }
 
-/// Discovers available locales by scanning the base directory
-/// Returns a sorted list of locale directory names
+/// Converts a PascalCase string to snake_case
+fn pascal_to_snake_case(input: &str) -> String {
+    let mut result = String::new();
+
+    for (i, ch) in input.chars().enumerate() {
+        if ch.is_uppercase() && i > 0 {
+            result.push('_');
+        }
+        result.push(ch.to_lowercase().next().unwrap());
+    }
+
+    result
+}
+
+/// Extracts the parent folder name from the enum name
+fn extract_parent_folder(enum_name: String) -> String {
+    let name = enum_name
+        .strip_suffix("Dirs")
+        .or_else(|| enum_name.strip_suffix("Dir"))
+        .unwrap_or(&enum_name);
+
+    pascal_to_snake_case(name)
+}
+
+/// Converts a PascalCase variant name to snake_case for directory names
+fn variant_to_dir_name(variant_name: &str) -> String {
+    pascal_to_snake_case(variant_name)
+}
 fn discover_locales(base_path: &str) -> Result<Vec<String>, std::io::Error> {
     let path = Path::new(base_path);
 
@@ -211,27 +219,6 @@ fn discover_locales(base_path: &str) -> Result<Vec<String>, std::io::Error> {
     locales.sort();
 
     Ok(locales)
-}
-
-/// Extracts the parent folder name from the enum name
-/// e.g., "AuthDirs" -> "auth", "EmailDirs" -> "email", "UserProfileDirs" -> "user_profile"
-fn extract_parent_folder(enum_name: String) -> String {
-    // Remove common suffixes
-    let name = enum_name
-        .strip_suffix("Dirs")
-        .or_else(|| enum_name.strip_suffix("Dir"))
-        .unwrap_or(&enum_name);
-
-    // Convert PascalCase to snake_case
-    let mut result = String::new();
-    for (i, ch) in name.chars().enumerate() {
-        if ch.is_uppercase() && i > 0 {
-            result.push('_');
-        }
-        result.push(ch.to_lowercase().next().unwrap());
-    }
-
-    result
 }
 
 #[cfg(test)]
