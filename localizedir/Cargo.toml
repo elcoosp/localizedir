@@ -1,0 +1,8 @@
+[package]
+name = "localizedir"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+localizedir-macros ={path="../localizedir-macros"}
+include_dir = "0.7.4"

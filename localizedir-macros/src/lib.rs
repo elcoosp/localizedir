@@ -1,47 +1,35 @@
-// Cargo.toml dependencies:
-// [dependencies]
-// include_dir = "0.7"
-//
-// [lib]
-// proc-macro = true
-//
-// [dependencies]
-// syn = { version = "2.0", features = ["full"] }
-// quote = "1.0"
-// proc-macro2 = "1.0"
-
 use proc_macro::TokenStream;
 use quote::quote;
 use std::fs;
 use std::path::Path;
 use syn::{Data, DeriveInput, Fields, Lit, parse_macro_input};
-
-// /// Generates a method to get localized directories based on locale and variant name
-// ///
-// /// # Example
-// /// ```rust
-// /// use localizedir::localizedir;
-// /// use include_dir::include_dir;
-// /// #[localizedir("mjml-dist/localized")]
-// /// enum AuthDirs {
-// ///     Welcome,
-// ///     Forgot,
-// /// }
-// ///
-// /// // Generates:
-// /// // impl AuthDirs {
-// /// //     fn to_localized_dir(&self, locale: &str) -> &'static include_dir::Dir<'static> {
-// /// //         match (self, locale) {
-// /// //             (AuthDirs::Welcome, "fr") => {
-// /// //                 static WELCOME_FR: include_dir::Dir<'static> =
-// /// //                     include_dir!("mjml-dist/localized/fr/auth/welcome");
-// /// //                 &WELCOME_FR
-// /// //             }
-// /// //             ...
-// /// //         }
-// /// //     }
-// /// // }
-// /// ```
+/// Generates a method to get localized directories based on locale and variant name
+///
+/// # Example
+/// ```rust
+/// use localizedir::{localizedir, LocalizeDir};
+/// use include_dir::include_dir;
+/// #[localizedir("mjml-dist/localized")]
+/// enum AuthDirs {
+///     Welcome,
+///     Forgot,
+/// }
+///
+/// // Generates:
+/// // impl LocalizeDir for AuthDirs {
+/// //     fn to_localized_dir(&self, locale: &str) -> &'static include_dir::Dir<'static> {
+/// //         match (self, locale) {
+/// //             (AuthDirs::Welcome, "fr") => {
+/// //                 static WELCOME_FR: include_dir::Dir<'static> =
+/// //                     include_dir!("mjml-dist/localized/fr/auth/welcome");
+/// //                 &WELCOME_FR
+/// //             }
+/// //             ...
+/// //         }
+/// //     }
+/// //     // ... other trait methods
+/// // }
+/// ```
 #[proc_macro_attribute]
 pub fn localizedir(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);
@@ -110,26 +98,29 @@ pub fn localizedir(attr: TokenStream, item: TokenStream) -> TokenStream {
         .map(|v| variant_to_dir_name(&v.ident.to_string()))
         .collect();
 
+    // Convert locales to string literals for the quote
+    let locale_literals: Vec<&str> = locales.iter().map(|s| s.as_str()).collect();
+
     let output = quote! {
         #input
 
-        impl #enum_name {
-            pub fn to_localized_dir(&self, locale: &str) -> &'static include_dir::Dir<'static> {
+        impl localizedir::LocalizeDir for #enum_name {
+            fn to_localized_dir(&self, locale: &str) -> &'static include_dir::Dir<'static> {
                 match (self, locale) {
                     #(#match_arms)*
                     _ => panic!("Unsupported locale: {}", locale),
                 }
             }
 
-            pub fn available_locales() -> &'static [&'static str] {
-                &[#(#locales),*]
+            fn available_locales() -> &'static [&'static str] {
+                &[#(#locale_literals),*]
             }
 
-            pub fn parent_folder() -> &'static str {
+            fn parent_folder() -> &'static str {
                 #parent_folder
             }
 
-            pub fn dir_name(&self) -> &'static str {
+            fn dir_name(&self) -> &'static str {
                 match self {
                     #(#enum_name::#variant_names => #variant_dir_names,)*
                 }
@@ -168,6 +159,7 @@ fn extract_parent_folder(enum_name: String) -> String {
 fn variant_to_dir_name(variant_name: &str) -> String {
     pascal_to_snake_case(variant_name)
 }
+
 fn discover_locales(base_path: &str) -> Result<Vec<String>, std::io::Error> {
     let path = Path::new(base_path);
 
@@ -268,7 +260,7 @@ mod tests {
 // Example usage in another crate:
 //
 // use include_dir::Dir;
-// use your_macro_crate::localizedir;
+// use your_macro_crate::{localizedir, LocalizeDir};
 //
 // #[localizedir("mjml-dist/localized")]
 // enum AuthDirs {
@@ -282,4 +274,5 @@ mod tests {
 //
 //     println!("Available locales: {:?}", AuthDirs::available_locales());
 //     println!("Parent folder: {}", AuthDirs::parent_folder());
+//     println!("Directory name: {}", AuthDirs::Welcome.dir_name());
 // }

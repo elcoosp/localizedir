@@ -34,6 +34,14 @@ dependencies = [
 name = "localizedir"
 version = "0.1.0"
 dependencies = [
+ "include_dir",
+ "localizedir-macros",
+]
+
+[[package]]
+name = "localizedir-macros"
+version = "0.1.0"
+dependencies = [
  "convert_case",
  "include_dir",
  "proc-macro2",
