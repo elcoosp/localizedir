@@ -1,8 +1,24 @@
 [package]
 name = "localizedir"
-version = "0.1.0"
-edition = "2024"
+description = "Compile-time localized directory inclusion: generate locale-aware, embedded directory accessors for enums"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [dependencies]
-localizedir-macros ={path="../localizedir-macros"}
-include_dir = "0.7.4"
+localizedir-macros = { workspace = true }
+include_dir = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+
+[lints]
+workspace = true
