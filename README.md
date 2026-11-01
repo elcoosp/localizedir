@@ -2,219 +2,234 @@
   <img src="docs/logo.png" alt="localizedir Logo" width="300"/>
   <p>
     <strong>Compile-Time Localized Directory Inclusion for Rust</strong><br/>
-    A powerful procedural macro that automates the inclusion of localized directories, eliminating boilerplate code for internationalization.
+    A procedural macro that embeds your localized directories once and generates
+    locale-aware accessors — no boilerplate, no runtime I/O.
   </p>
   <p>
-    <img src="https://img.shields.io/badge/Rust-1.94%20%7C%202024-000000?style=flat-square&logo=rust" alt="Rust"/>
+    <img src="https://img.shields.io/badge/rustc-1.88%2B-000000?style=flat-square&logo=rust" alt="MSRV"/>
     <img src="https://img.shields.io/crates/v/localizedir?style=flat-square" alt="Crates.io"/>
+    <img src="https://img.shields.io/docsrs/localizedir?style=flat-square" alt="docs.rs"/>
+    <img src="https://img.shields.io/github/actions/workflow/status/elcoosp/localizedir/ci.yml?branch=main&style=flat-square&label=CI" alt="CI"/>
+    <img src="https://img.shields.io/endpoint?style=flat-square&url=https%3A%2F%2Fraw.githubusercontent.com%2Felcoosp%2Flocalizedir%2Fmain%2Fdocs%2Fcoverage.json" alt="Coverage 100%"/>
     <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License MIT"/>
   </p>
 </div>
 
 ---
 
-`localizedir` streamlines internationalization in Rust by automatically generating localized directory accessors at compile time. By leveraging the `include_dir` crate, it ensures all paths are verified and embedded directly into your binary, providing zero-boilerplate, type-safe access to locale-specific assets.
+`localizedir` turns an enum into locale-aware accessors over directories
+embedded with [`include_dir`](https://crates.io/crates/include_dir). The whole
+base directory is embedded **once** at compile time; every lookup is a cheap
+navigation inside that embedded tree. Locales are discovered from the
+filesystem at compile time, so typos in the *directory structure* fail the
+build — and unknown locales at runtime return `Option` instead of file-not-found.
 
 ## Features
 
-- **Zero Boilerplate**: Automatically generates localized directory accessors and helper methods.
-- **Compile-Time Safety**: All paths are verified and included at compile time, preventing runtime file-not-found errors.
-- **Multi-Locale Support**: Seamlessly handles multiple languages and regions with a simple string argument.
-- **Flexible Naming**: Smart parent folder detection derived directly from enum names.
-- **IDE Friendly**: Generated code is fully compatible with `rust-analyzer` for excellent autocomplete and navigation.
+- **Zero boilerplate**: one attribute generates the full `LocalizeDir`
+  implementation, including metadata accessors.
+- **Compile-time safety**: missing base paths, missing `(locale, variant)`
+  directories, duplicate directory names, and malformed attributes all fail
+  to compile with an error pointing at the offending token.
+- **One embed, many lookups**: the base directory is embedded a single time
+  (`include_dir!` per (variant × locale) would re-expand the tree over and
+  over); lookups navigate the embedded tree, so compiles stay fast.
+- **Non-panicking core**: `try_to_localized_dir` returns `Option`; the
+  panicking `to_localized_dir` layers an optional `fallback` locale on top.
+- **Workspace-proof paths**: relative base paths are anchored at
+  `$CARGO_MANIFEST_DIR` (the crate manifest directory), so the macro works in
+  cargo workspaces where the compiler's working directory is the workspace
+  root. `$VAR` interpolation matches `include_dir!`'s own semantics.
+- **IDE friendly**: generated code is plain, documented, and fully navigable
+  with rust-analyzer.
 
 ## Installation
 
-Add `localizedir` and `include_dir` to your `Cargo.toml` dependencies:
+Add `localizedir` and `include_dir` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-localizedir = "0.1"
+localizedir = "0.2"
 include_dir = "0.7"
 ```
 
+> `include_dir` is a direct dependency of your crate because the macro
+> expands to `include_dir::include_dir!(...)`, which resolves in *your* crate.
+
 ## Quick Start
 
-Define an enum with the `#[localizedir]` attribute, pointing to your base localized directory:
-
 ```rust
-use localizedir::localizedir;
-use include_dir::include_dir;
+use localizedir::{LocalizeDir, localizedir};
 
-#[localizedir("templates/localized")]
-enum AuthTemplates {
+#[localizedir("tests/fixtures/localized")]
+enum AuthDirs {
     Welcome,
     ForgotPassword,
-    EmailVerification,
 }
 
-fn main() {
-    // Access French welcome templates
-    let welcome_fr = AuthTemplates::Welcome.to_localized_dir("fr");
-    println!("French templates: {}", welcome_fr.path().display());
-    
-    // Access English forgot password templates
-    let forgot_en = AuthTemplates::ForgotPassword.to_localized_dir("en");
-    println!("English templates: {}", forgot_en.path().display());
-    
-    // Get directory metadata
-    println!("Parent folder: {}", AuthTemplates::parent_folder());
-    println!("Base path: {}", AuthTemplates::base_path());
-    println!("Welcome dir name: {}", AuthTemplates::Welcome.dir_name());
-}
+// Non-panicking lookup returns the embedded directory for a locale.
+let dir = AuthDirs::Welcome.try_to_localized_dir("fr").expect("fr exists");
+assert!(dir.get_file("fr/auth/welcome/note.txt").is_some());
+
+// Panicking lookup, plus compile-time metadata:
+let dir = AuthDirs::Welcome.to_localized_dir("en");
+assert_eq!(AuthDirs::available_locales(), &["de", "en", "fr"]);
+assert_eq!(AuthDirs::parent_folder(), "auth");
+assert_eq!(AuthDirs::base_path(), "tests/fixtures/localized");
+assert_eq!(AuthDirs::Welcome.dir_name(), "welcome");
+assert!(AuthDirs::has_locale("de"));
+assert_eq!(
+    AuthDirs::ForgotPassword.full_path("fr"),
+    std::path::PathBuf::from("fr/auth/forgot_password"),
+);
 ```
 
 ## Directory Structure
 
-The macro expects a specific, predictable directory structure based on the locale, the inferred parent folder, and the kebab-case variant name:
+The macro expects one subdirectory per locale under the base path, with the
+parent folder and per-variant directories inside:
 
 ```text
 templates/localized/
+├── de/
+│   └── auth/
+│       ├── welcome/
+│       └── forgot_password/
 ├── en/
-│   ├── auth/
-│   │   ├── welcome/
-│   │   ├── forgot_password/
-│   │   └── email_verification/
-├── fr/
-│   ├── auth/
-│   │   ├── welcome/
-│   │   ├── forgot_password/
-│   │   └── email_verification/
-└── es/
-    ├── auth/
+│   └── auth/
+│       ├── welcome/
+│       └── forgot_password/
+└── fr/
+    └── auth/
         ├── welcome/
-        ├── forgot_password/
-        └── email_verification/
+        └── forgot_password/
 ```
 
 > [!NOTE]
-> The parent folder (e.g., `auth`) is automatically inferred by stripping common suffixes like `Templates` or `Documents` from the enum name (`AuthTemplates` -> `auth`) and converting it to snake_case.
+> The parent folder (e.g. `auth`) is inferred from the enum name by stripping
+> a known suffix (`Dirs`, `Dir`, `Templates`, `Template`, `Documents`,
+> `Document`, `Directories`, `Docs`, `Assets`, `Asset`, `Files`, `File`,
+> `Locales`, `Locale`) and converting the remainder to `snake_case`
+> (`AuthTemplates` → `auth`, `APIResponseDirs` → `api_response`).
 
-## Advanced Usage
+## Attribute Options
 
-### Multiple Directory Sets
+| Option | Default | Meaning |
+|--------|---------|---------|
+| `"<base path>"` | — | Directory containing one subdirectory per locale. Resolved relative to the crate manifest directory; `$VAR` interpolation supported. |
+| `fallback = "<locale>"` | none | Locale used by `to_localized_dir` when the requested locale has no embedded directory. |
+| `parent = "<folder>"` | inferred | Overrides the parent folder inferred from the enum name. |
+| `case = "snake" \| "kebab" \| "flat"` | `"snake"` | Naming scheme used to convert variant names into directory names. |
 
-You can define multiple enums pointing to the same or different base paths to organize your assets logically:
+Variants may carry `#[dir_name = "..."]` to override an individual directory
+name:
 
 ```rust
-#[localizedir("templates/localized")]
-enum AuthTemplates {
+#[localizedir("assets/localized")]
+enum MailTemplates {
+    #[dir_name = "welcome_v2"]
     Welcome,
-    ResetPassword,
-}
-
-#[localizedir("templates/localized")]
-enum EmailTemplates {
-    Newsletter,
-    Promotional,
-}
-
-#[localizedir("assets/legal")]
-enum LegalDocuments {
-    TermsOfService,
-    PrivacyPolicy,
+    PasswordReset,
 }
 ```
 
-### Full Path Information
+## API
 
-The macro generates several helper methods for introspection and path resolution:
+Every annotated enum implements [`LocalizeDir`]:
 
-```rust
-let template = AuthTemplates::Welcome;
+| Method | Panics? | Description |
+|--------|---------|-------------|
+| `try_to_localized_dir(&self, locale)` | no | `Option<&'static Dir<'static>>` — the core lookup. |
+| `to_localized_dir(&self, locale)` | yes | Panicking lookup; honors `fallback` when configured. |
+| `available_locales()` | no | Sorted locales discovered at compile time. |
+| `has_locale(locale)` | no | `true` when the locale was discovered. |
+| `fallback_locale()` | no | The configured fallback, if any. |
+| `base_path()` | no | The base path exactly as written in the attribute. |
+| `parent_folder()` | no | Inferred or overridden parent folder. |
+| `dir_name(&self)` | no | This variant's directory name. |
+| `full_path(&self, locale)` | no | Embedded path (root-relative); equals `Dir::path()` of the returned directory. |
 
-println!("Directory name: {}", template.dir_name());
-println!("Full path for French: {}", template.full_path("fr"));
-println!("Parent folder: {}", AuthTemplates::parent_folder());
-println!("Base path: {}", AuthTemplates::base_path());
-```
-
-## Generated Code
-
-For transparency, applying `#[localizedir("templates/localized")]` to an enum generates code similar to the following:
-
-```rust
-enum AuthTemplates {
-    Welcome,
-    ForgotPassword,
-}
-
-static WELCOME_DIR_NAME: &str = "welcome";
-static FORGOT_PASSWORD_DIR_NAME: &str = "forgot_password";
-
-impl AuthTemplates {
-    pub fn to_localized_dir(&self, locale: &str) -> include_dir::Dir<'static> {
-        match self {
-            AuthTemplates::Welcome => {
-                include_dir::include_dir!(concat!("templates/localized/", locale, "/auth/welcome"))
-            }
-            AuthTemplates::ForgotPassword => {
-                include_dir::include_dir!(concat!("templates/localized/", locale, "/auth/forgot_password"))
-            }
-        }
-    }
-    
-    // ... plus additional helper methods (dir_name, full_path, parent_folder, base_path)
-}
-```
-
-## Naming Conventions
-
-The macro automatically converts enum names and variants into directory names using predictable rules:
-
-| Enum Name | Inferred Parent Folder | Variant | Directory Name |
-| :--- | :--- | :--- | :--- |
-| `AuthTemplates` | `auth` | `Welcome` | `welcome` |
-| `EmailTemplates` | `email` | `Newsletter` | `newsletter` |
-| `UserProfileTemplates` | `user_profile` | `Settings` | `settings` |
+> [!TIP]
+> Entry paths inside the embedded tree are relative to the embedded root —
+> look files up with `dir.get_file(template.full_path(locale).join("file.txt"))`
+> or iterate with `dir.files()`.
 
 ## Common Use Cases
 
-### MJML or HTML Email Templates
+### Localized email templates
+
 ```rust
-#[localizedir("mjml-dist/localized")]
+#[localizedir("mjml-dist/localized", fallback = "en")]
 enum AuthEmails {
     Welcome,
     PasswordReset,
     AccountVerification,
 }
 
-fn render_localized_email(template: AuthEmails, locale: &str, data: &EmailData) -> String {
-    let dir = template.to_localized_dir(locale);
-    // Process MJML templates from the embedded directory
-    // ...
+fn render_email(template: AuthEmails, locale: &str) -> String {
+    let dir = template.to_localized_dir(locale); // falls back to `en` if needed
+    let body = dir.get_file(template.full_path(locale).join("index.mjml")).unwrap();
+    // hand `body.contents()` to your MJML renderer...
 }
 ```
 
-### Static Asset Management
+### Legal documents with kebab-case directories
+
 ```rust
-#[localizedir("assets/localized")]
-enum LegalDocuments {
+#[localizedir("assets/legal", case = "kebab")]
+enum LegalDocs {
     TermsOfService,
     PrivacyPolicy,
 }
 
-fn get_localized_document(doc: LegalDocuments, locale: &str) -> &'static str {
-    let dir = doc.to_localized_dir(locale);
-    // Extract and return document content from the embedded directory
-    // ...
-}
+// LegalDocs::TermsOfService.dir_name() == "terms-of-service"
 ```
 
-## Best Practices
+## Naming Conventions
 
-> [!TIP]
-> - **Organize by Feature**: Group related templates or assets within the same enum to keep your codebase modular.
-> - **Consistent Naming**: Use clear, descriptive variant names (e.g., `PasswordReset` instead of `Pass`).
-> - **Fallback Systems**: Combine the generated accessors with a runtime fallback mechanism (e.g., trying "fr", then defaulting to "en" if the directory or file is missing).
+| Enum Name | Inferred Parent | Variant | Directory Name (snake) | Directory Name (kebab) |
+| :--- | :--- | :--- | :--- | :--- |
+| `AuthDirs` | `auth` | `Welcome` | `welcome` | `welcome` |
+| `EmailTemplates` | `email` | `Newsletter` | `newsletter` | `newsletter` |
+| `UserProfileDirs` | `user_profile` | `ForgotPassword` | `forgot_password` | `forgot-password` |
+| `APIResponseDirs` | `api_response` | `HtmlReport` | `html_report` | `html-report` |
 
-## Limitations
+## Error Diagnostics
 
-- Requires the `include_dir` crate as a dependency for directory inclusion.
-- Directory paths must exist at compile time; the macro will fail to compile if the base path or inferred subdirectories are missing.
-- Locales are specified as string slices (`&str`) at runtime, meaning typoed locale strings will not be caught by the compiler (though the base path structure is validated).
+The macro reports every problem at compile time, at the right location:
 
----
+```text
+error: missing directories for some (locale, variant) pairs:
+  - /path/to/crate/locales/fr/auth/forgot_password
+ --> src/lib.rs:3:15
+  |
+3 | #[localizedir("locales")]
+  |               ^^^^^^^^^
+```
 
-> [!IMPORTANT]
-> This crate is designed to work in tandem with the [`include_dir`](https://crates.io/crates/include_dir) crate, which embeds directory contents directly into your binary at compile time, ensuring zero runtime I/O overhead for asset retrieval.
+Other diagnostics cover non-enum targets, generic enums, empty enums,
+fielded variants, duplicate directory names, unknown or duplicate attribute
+options, non-literal values, and unset `$VAR`s.
+
+## MSRV & Compatibility
+
+- Minimum Supported Rust Version: **1.88** (edition 2024; trybuild requires it), enforced by CI.
+- Tested on Linux, macOS, and Windows.
+- Dependencies are refreshed and audited automatically (Dependabot +
+  `cargo-deny`).
+
+## Development
+
+```bash
+cargo test --workspace --all-features   # unit + integration + trybuild + doctests
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+./scripts/check-coverage.sh             # enforces 100% line coverage
+```
+
+The changelog is generated with [git-cliff](https://git-cliff.org) from
+conventional commits; releases are automated in
+[`.github/workflows/release.yml`](.github/workflows/release.yml).
+
+## License
+
+MIT — see [LICENSE-MIT](LICENSE-MIT).
