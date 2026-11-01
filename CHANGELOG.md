@@ -103,6 +103,18 @@ Concurrency cancels in-flight runs on the same ref.
 - *(workspace)* Restructure workspace with shared metadata - Introduce `[workspace.package]` (version 0.2.0, edition 2024, rust-version 1.88, MIT, authors, repository, keywords, categories) and `[workspace.dependencies]` (syn 3.0.9, convert_case 0.12.0, quote 1.0.47, proc-macro2 1.0.107, include_dir 0.7.4, trybuild, tempfile). Add `[workspace.lints]` enabling `missing_docs` and clippy `pedantic`. Enable LTO + single codegen unit + strip in `[profile.release]`.
 - *(macros)* Update localizedir-macros package metadata - Inherit version/edition/rust-version/license/authors/repo/keywords from the workspace. Move syn/quote/proc-macro2/convert_case to workspace dependencies. Drop the unused `include_dir` runtime dependency (the macro only needs it at expansion time via the facade crate). Add trybuild + tempfile as dev-dependencies for UI tests.
 - *(facade)* Update localizedir package metadata - Inherit workspace metadata. Point `localizedir-macros` and `include_dir` at workspace dependencies. Add tempfile as a dev-dependency for integration tests.
+- *(deps)* Bump codecov/codecov-action from 5 to 7 - Bumps [codecov/codecov-action](https://github.com/codecov/codecov-action) from 5 to 7.
+- [Release notes](https://github.com/codecov/codecov-action/releases)
+- [Changelog](https://github.com/codecov/codecov-action/blob/main/CHANGELOG.md)
+- [Commits](https://github.com/codecov/codecov-action/compare/v5...v7)
+
+---
+updated-dependencies:
+- dependency-name: codecov/codecov-action
+  dependency-version: '7'
+  dependency-type: direct:production
+  update-type: version-update:semver-major
+...
 
 
 
