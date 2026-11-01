@@ -85,7 +85,7 @@ jobs:
         with:
           tool: cargo-llvm-cov
       - run: ./scripts/check-coverage.sh
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v7
         with:
           files: target/lcov.info
           fail_ci_if_error: false
