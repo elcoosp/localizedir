@@ -1,0 +1,11 @@
+error: `localizedir` only supports unit variants (no fields)
+ --> tests/ui/fielded_variant.rs:5:5
+  |
+5 |     Welcome { language: &'static str },
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0601]: `main` function not found in crate `$CRATE`
+ --> tests/ui/fielded_variant.rs:6:2
+  |
+6 | }
+  |  ^ consider adding a `main` function to `$DIR/tests/ui/fielded_variant.rs`
