@@ -1,0 +1,11 @@
+error: `localizedir` does not support generic enums; the embedded directories are concrete `include_dir` trees
+ --> tests/ui/generic_enum.rs:4:13
+  |
+4 | enum Generic<T> {
+  |             ^^^
+
+error[E0601]: `main` function not found in crate `$CRATE`
+ --> tests/ui/generic_enum.rs:6:2
+  |
+6 | }
+  |  ^ consider adding a `main` function to `$DIR/tests/ui/generic_enum.rs`
