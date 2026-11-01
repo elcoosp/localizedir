@@ -115,6 +115,18 @@ updated-dependencies:
   dependency-type: direct:production
   update-type: version-update:semver-major
 ...
+- *(deps)* Bump softprops/action-gh-release from 2 to 3 - Bumps [softprops/action-gh-release](https://github.com/softprops/action-gh-release) from 2 to 3.
+- [Release notes](https://github.com/softprops/action-gh-release/releases)
+- [Changelog](https://github.com/softprops/action-gh-release/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/softprops/action-gh-release/compare/v2...v3)
+
+---
+updated-dependencies:
+- dependency-name: softprops/action-gh-release
+  dependency-version: '3'
+  dependency-type: direct:production
+  update-type: version-update:semver-major
+...
 
 
 
