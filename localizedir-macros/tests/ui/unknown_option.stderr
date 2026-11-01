@@ -1,0 +1,11 @@
+error: unknown option `unknow`; expected one of `fallback`, `parent`, `case`
+ --> tests/ui/unknown_option.rs:3:27
+  |
+3 | #[localizedir("whatever", unknow = "en")]
+  |                           ^^^^^^
+
+error[E0601]: `main` function not found in crate `$CRATE`
+ --> tests/ui/unknown_option.rs:6:2
+  |
+6 | }
+  |  ^ consider adding a `main` function to `$DIR/tests/ui/unknown_option.rs`
