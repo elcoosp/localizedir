@@ -1,3 +1,37 @@
 [workspace]
-members=["localizedir-macros","localizedir"]
-resolver="3"
+members = ["localizedir", "localizedir-macros"]
+resolver = "3"
+
+[workspace.package]
+version = "0.2.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT"
+authors = ["elcoosp"]
+repository = "https://github.com/elcoosp/localizedir"
+homepage = "https://github.com/elcoosp/localizedir"
+documentation = "https://docs.rs/localizedir"
+readme = "README.md"
+keywords = ["i18n", "localization", "include-dir", "macro", "embedded"]
+categories = ["internationalization", "filesystem"]
+
+[workspace.dependencies]
+localizedir-macros = { version = "0.2.0", path = "localizedir-macros" }
+include_dir = "0.7.4"
+syn = { version = "3.0.9", features = ["full", "extra-traits"] }
+quote = "1.0.47"
+proc-macro2 = "1.0.107"
+convert_case = "0.12.0"
+trybuild = "1.0.122"
+tempfile = "3.14.0"
+
+[workspace.lints.rust]
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
