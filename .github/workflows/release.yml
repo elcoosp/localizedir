@@ -83,6 +83,6 @@ jobs:
         with:
           fetch-depth: 0
       - name: Create the GitHub release with git-cliff notes
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           body: ${{ needs.changelog.outputs.release_body }}
