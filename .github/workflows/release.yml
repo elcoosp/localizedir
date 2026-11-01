@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  verify-tag:
+    name: verify tag matches version
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Tag must equal the workspace version
+        run: |
+          version="v$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[] | select(.name == "localizedir") | .version')"
+          if [ "$version" != "${GITHUB_REF_NAME}" ]; then
+            echo "tag ${GITHUB_REF_NAME} does not match workspace version $version"
+            exit 1
+          fi
+          echo "releasing $version"
+
+  changelog:
+    name: changelog (git-cliff)
+    needs: verify-tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      release_body: ${{ steps.git-cliff.outputs.content }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Generate release notes for the latest tag
+        id: git-cliff
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: -vv --latest --strip header
+        env:
+          GITHUB_REPO: ${{ github.repository }}
+
+  publish:
+    name: publish to crates.io
+    needs: [verify-tag, changelog]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Publish localizedir-macros
+        run: cargo publish -p localizedir-macros --locked
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Publish localizedir (waits for the macros crate to index)
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if cargo publish -p localizedir --locked; then
+              exit 0
+            fi
+            echo "attempt $attempt failed; crates.io index may not have the macros crate yet"
+            sleep 30
+          done
+          exit 1
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+  github-release:
+    name: github release
+    needs: [changelog, publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Create the GitHub release with git-cliff notes
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ needs.changelog.outputs.release_body }}
