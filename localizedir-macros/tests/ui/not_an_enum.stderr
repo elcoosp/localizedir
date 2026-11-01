@@ -1,0 +1,11 @@
+error: `localizedir` can only be applied to enums
+ --> tests/ui/not_an_enum.rs:4:1
+  |
+4 | struct NotAnEnum;
+  | ^^^^^^^^^^^^^^^^^
+
+error[E0601]: `main` function not found in crate `$CRATE`
+ --> tests/ui/not_an_enum.rs:4:18
+  |
+4 | struct NotAnEnum;
+  |                  ^ consider adding a `main` function to `$DIR/tests/ui/not_an_enum.rs`
