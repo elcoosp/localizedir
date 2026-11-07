@@ -1,0 +1,83 @@
+---
+title: include_dir interop
+description: How generated code relates to include_dir — the LOCALIZEDIR_BASE embed, root-relative path semantics, and reading files from returned directories.
+type: reference
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+`localizedir` builds on [include_dir](https://crates.io/crates/include_dir) and exposes its real types. This page documents the exact interaction so you can use the full `include_dir` API on returned directories.
+
+## You need both crates
+
+The macro expands to `include_dir::include_dir!(...)`, which resolves in *your* crate — not inside the `localizedir` crate. Your `Cargo.toml` therefore lists both:
+
+```toml
+[dependencies]
+localizedir = "0.2"
+include_dir = "0.7"
+```
+
+## The single embed
+
+The generated code contains one `#[doc(hidden)]` constant on your enum:
+
+```rust
+#[doc(hidden)]
+impl AuthDirs {
+    /// The whole base directory, embedded exactly once.
+    const LOCALIZEDIR_BASE: ::include_dir::Dir<'static> =
+        ::include_dir::include_dir!("$CARGO_MANIFEST_DIR/tests/fixtures/localized");
+}
+```
+
+Every lookup navigates this one static tree with `Dir::get_dir`, so the embed cost is paid once per enum regardless of how many variants and locales you have. The `include_arg` uses the `$CARGO_MANIFEST_DIR/` convention for relative inputs so the embedded root never depends on the compiler's working directory.
+
+## Root-relative path semantics
+
+In `include_dir`, paths are relative to the **embedded root**, and the same path space is shared by the root directory and every subdirectory. Two consequences matter in practice:
+
+- `Dir::path()` of a returned directory equals `full_path(locale)` — for example `fr/auth/welcome`.
+- `get_file` accepts root-relative paths even when you call it on a subdirectory.
+
+```rust
+let dir = AuthDirs::Welcome.try_to_localized_dir("fr").expect("fr exists");
+assert_eq!(dir.path(), std::path::Path::new("fr/auth/welcome"));
+
+// Both forms find the same file:
+assert!(dir.get_file("fr/auth/welcome/note.txt").is_some());
+assert!(dir.get_file(AuthDirs::Welcome.full_path("fr").join("note.txt")).is_some());
+```
+
+The second form composes cleanly when you already hold the variant and the locale:
+
+```rust
+fn read_note(template: AuthDirs, locale: &str) -> Option<String> {
+    let dir = template.try_to_localized_dir(locale)?;
+    let file = dir.get_file(template.full_path(locale).join("note.txt"))?;
+    Some(String::from_utf8_lossy(file.contents()).into_owned())
+}
+```
+
+## The full include_dir toolkit
+
+The returned `&'static Dir<'static>` is a plain `include_dir::Dir`, so everything in its API works on your localized subtree:
+
+| API | Use |
+| :--- | :--- |
+| `dir.get_file(path)` | Fetch one embedded file by root-relative path. |
+| `dir.files()` | Iterate every file under the directory, recursively. |
+| `dir.dirs()` | Iterate subdirectories. |
+| `dir.find(pattern)` | Glob-style search. Requires the `glob` feature of `include_dir`. |
+| `dir.extract(base_path)` | Write the subtree back out to the real filesystem. |
+| `file.contents()` | The file bytes, `&'static [u8]`. |
+| `file.contents_utf8()` | The file bytes as `&'static str`, when valid UTF-8. |
+
+<Aside type="note">
+Because contents are `'static` slices into the binary, you can hand them to parsers, caches, or ` &'static str`-expecting APIs without copying.
+</Aside>
+
+## Next steps
+
+<LinkCard label="How it works" href="/explanation/how-it-works/" />
+<LinkCard label="The LocalizeDir trait" href="/reference/localize-dir-trait/" />
