@@ -1,0 +1,39 @@
+---
+title: Release notes
+description: What shipped in localizedir 0.2.0 and where to follow new releases.
+type: reference
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+
+## Version 0.2.0 — the compile-time overhaul
+
+Version 0.2.0 rebuilt the crate around a single-embed architecture and an `Option`-first API. The highlights:
+
+### API
+
+- **Non-panicking core** — `try_to_localized_dir` returns `Option<&'static Dir<'static>>`; `to_localized_dir` is the panicking wrapper that honors `fallback`.
+- **New metadata methods** — `base_path()`, `full_path(locale)`, `has_locale(locale)`, and `fallback_locale()` join the original `available_locales()`, `parent_folder()`, and `dir_name()`.
+- **New attribute options** — `fallback = "..."`, `parent = "..."`, and `case = "snake" | "kebab" | "flat"`, plus per-variant `#[dir_name = "..."]` overrides.
+
+### Performance
+
+- The base directory is embedded **once** through a single `include_dir!` expansion instead of one expansion per `(variant, locale)` pair. Lookups navigate the embedded tree, so compiles stay fast as the tree grows and runtime fallback is a tree navigation rather than a generated match arm.
+
+### Diagnostics
+
+- Compile errors point at the offending token instead of surfacing as `proc-macro panicked`. Filesystem problems list every missing `(locale, variant)` path. The diagnostic surface is snapshot-tested with [trybuild](https://docs.rs/trybuild).
+
+### Internal quality
+
+- The macro crate is split into `args`, `naming`, `discovery`, and `expand` modules, each unit-tested without a compiler context.
+- Name conversion uses [convert_case](https://crates.io/crates/convert_case), fixing acronym handling (`APIResponseDirs` → `api_response`).
+- The workspace enforces `missing_docs` and clippy `pedantic` with warnings denied, 100% line coverage via `cargo-llvm-cov`, and `cargo-deny` for advisories, licenses, and bans.
+- CI runs tests on Linux, macOS, and Windows, checks MSRV 1.88, and releases are automated with [git-cliff](https://git-cliff.org) changelogs.
+
+## Following releases
+
+New releases are published to [crates.io](https://crates.io/crates/localizedir) and tagged on GitHub. The full changelog is generated from conventional commits:
+
+<LinkCard label="Full changelog on GitHub" href="https://github.com/elcoosp/localizedir/blob/main/CHANGELOG.md" />
+<LinkCard label="API documentation on docs.rs" href="https://docs.rs/localizedir" />
