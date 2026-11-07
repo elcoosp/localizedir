@@ -1,0 +1,71 @@
+---
+title: localizedir
+description: Compile-time localized directory inclusion for Rust — embed once, look up per locale, and fail the build on structural mistakes.
+type: explanation
+pagefind: true
+hero:
+  tagline: Compile-time localized directory inclusion for Rust
+  image:
+    file: ../../assets/logo.png
+    alt: Nested colored folders containing a globe, the localizedir logo
+  actions:
+    - text: Get started in five minutes
+      link: /tutorials/getting-started/
+      icon: rocket
+    - text: GitHub
+      link: https://github.com/elcoosp/localizedir
+      icon: github
+      variant: minimal
+---
+
+import { Aside, Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+`localizedir` turns an enum into locale-aware accessors over directories embedded with [include_dir](https://crates.io/crates/include_dir). You annotate an enum, the macro embeds your localized directory tree once at compile time, and every lookup afterwards is a cheap navigation inside that tree — no runtime file I/O, no boilerplate.
+
+```rust
+use localizedir::{LocalizeDir, localizedir};
+
+#[localizedir("tests/fixtures/localized")]
+enum AuthDirs {
+    Welcome,
+    ForgotPassword,
+}
+
+let dir = AuthDirs::Welcome.to_localized_dir("fr");
+assert!(dir.get_file("fr/auth/welcome/note.txt").is_some());
+```
+
+Locales are discovered from the filesystem at compile time. Typos in the directory structure fail the build with an error pointing at the offending token; unknown locales at runtime return `Option` instead of a file-not-found surprise.
+
+## Choose your path
+
+<CardGrid stagger>
+  <Card title="Build your first localized enum" icon="rocket">
+    Walk the full tutorial: prepare a directory tree, annotate an enum, and look up embedded directories per locale.
+    <LinkCard label="Getting started tutorial" href="/tutorials/getting-started/" />
+  </Card>
+  <Card title="Solve a specific problem" icon="puzzle">
+    Short, task-focused guides: organize your tree, control directory names, handle unknown locales, or fix a compile error.
+    <LinkCard label="Browse the how-to guides" href="/guides/organize-your-directories/" />
+  </Card>
+  <Card title="Look up the exact API" icon="open-book">
+    Attribute options, every `LocalizeDir` method, naming rules, the full compile-error catalogue, and `include_dir` interop.
+    <LinkCard label="Open the reference" href="/reference/attribute/" />
+  </Card>
+  <Card title="Understand the design" icon="information">
+    How the single-embed model keeps compiles fast, and why the lookup core never panics or normalizes locales.
+    <LinkCard label="Read the explanations" href="/explanation/how-it-works/" />
+  </Card>
+</CardGrid>
+
+## Why localizedir
+
+- **One embed, many lookups** — the whole base directory is embedded a single time through one `include_dir!` expansion, so compile times stay flat as your template tree grows.
+- **Compile-time safety** — missing base paths, missing `(locale, variant)` directories, duplicate directory names, and malformed attributes all fail to compile, at the right source location.
+- **Non-panicking core** — `try_to_localized_dir` returns `Option`; the panicking `to_localized_dir` layers an optional `fallback` locale on top.
+- **Workspace-proof paths** — relative base paths anchor at `$CARGO_MANIFEST_DIR`, and `$VAR` interpolation matches `include_dir!`'s own semantics.
+- **IDE friendly** — generated code is plain, documented, and fully navigable with rust-analyzer.
+
+<Aside type="note">
+localizedir requires Rust 1.88 or newer (edition 2024) and works on Linux, macOS, and Windows.
+</Aside>
