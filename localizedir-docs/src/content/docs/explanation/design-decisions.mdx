@@ -1,0 +1,49 @@
+---
+title: Design decisions
+description: Why localizedir looks the way it does — Option-first lookups, fallback at the panicking API only, plain locale keys, and the features that were rejected.
+type: explanation
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+
+The crate's [design review](https://github.com/elcoosp/localizedir/blob/main/docs/BRAINSTORM.md) recorded every accepted and rejected idea with its rationale, so the reasoning stays visible. This page summarizes the decisions that shape the public API.
+
+## Option-first lookup
+
+`try_to_localized_dir` returning `Option` is the primitive; `to_localized_dir` is the convenience wrapper built on top of it. This is the Rust-idiomatic order: the non-panicking method is the one you cannot avoid seeing, and the panicking one documents its panic condition. The panicking variant exists because the common case — a locale you validated or a fallback you configured — should not force `.expect()` boilerplate at every call site.
+
+## Fallback lives at the panicking API only
+
+With `fallback = "en"` configured, only `to_localized_dir` consults the fallback. `try_to_localized_dir` stays pure: it answers exactly one question — does this locale exist in the tree? — and leaves fallback policy visible in the caller's code. A `try_` method that silently substituted the fallback would hide the very situation its `None` exists to signal.
+
+## Plain &str locale keys
+
+Locales are plain `&'static str` directory names, not a `LanguageTag` newtype. A validated language-tag type belongs to higher-level i18n crates; here it would add a conversion boundary to every lookup while the macro's job is embedding and navigation. If you already own a locale type, convert it to its directory key and call the trait.
+
+## No runtime normalization
+
+Case-folding `"FR"` to `"fr"` or matching `"en-US"` to `"en"` at lookup time was rejected: each normalization allocates, and silent guessing hides typos that an exact match surfaces immediately. The `fallback` option covers the operational need (serve something sensible for unexpected locales), and the [unknown-locales guide](/guides/handle-unknown-locales/) shows where to put an explicit negotiation layer when you want prefix matching.
+
+## Convert_case over hand-rolled casing
+
+The first implementation carried a hand-rolled `pascal_to_snake_case` that mangled acronyms — `APIResponseDirs` became `a_p_i_response`. The fix replaced it with [convert_case](https://crates.io/crates/convert_case), which was already a dependency. The lesson generalizes: identifier casing is a solved problem with acronym-bearing edge cases; do not re-solve it inside a macro.
+
+## Rejected features, on the record
+
+| Rejected idea | Why |
+| :--- | :--- |
+| Runtime locale normalization (case folding, `-` → `_`) | Allocates per lookup and hides typos; `fallback` covers the operational need. |
+| BCP-47 prefix matching (`en-GB` → `en`) | A whole i18n subdomain; compose it yourself in front of the lookup. |
+| Multiple base paths per enum | YAGNI; `include_dir` 0.7 offers no file-filter hook without forking it. |
+| Glob-based file filtering | Same reason as above. |
+| serde support / generated locale enums | `available_locales()` already exposes the data; wiring it into your types is a one-liner on your side. |
+| Manual tree descent to avoid one `PathBuf` join | Through a trait object the borrows stop being `'static`; one small allocation buys obvious correctness. |
+
+## What was accepted in the same review
+
+The same review shipped the single-embed model, the four-module split of the macro crate (`args`, `naming`, `discovery`, `expand`), token-pointing diagnostics through `syn::Error::into_compile_error`, workspace-level shared metadata, and the quality gates you can rely on as a user: 100% line coverage enforced in CI, trybuild snapshot tests for the diagnostic surface, `missing_docs` and clippy pedantic with warnings denied, and dependency auditing via `cargo-deny`.
+
+## Next steps
+
+<LinkCard label="How it works" href="/explanation/how-it-works/" />
+<LinkCard label="Release notes" href="/reference/release-notes/" />
