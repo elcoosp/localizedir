@@ -1,0 +1,80 @@
+---
+title: Handle unknown locales at runtime
+description: Decide between the panicking and Option-returning lookups, configure a fallback locale, and understand why lookups match exactly.
+type: how-to
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+This guide helps you choose the right lookup method for each call site and configure fallback behavior for locales you do not embed.
+
+## Pick the right lookup method
+
+The trait offers one non-panicking primitive and one convenience wrapper:
+
+```rust
+// Returns None when the locale has no embedded directory.
+let maybe_dir: Option<&Dir> = AuthDirs::Welcome.try_to_localized_dir("pt-BR");
+
+// Panics when the locale (and the configured fallback, if any) is missing.
+let dir: &Dir = AuthDirs::Welcome.to_localized_dir("fr");
+```
+
+Use `try_to_localized_dir` at boundaries where the locale comes from user input — request headers, configuration files, CLI flags. Use `to_localized_dir` when you have already validated the locale or when a missing locale is a bug you want to crash on.
+
+<Aside type="caution">
+`to_localized_dir` honors the `fallback` option when one is configured. `try_to_localized_dir` never falls back — it stays a pure "does this locale exist" lookup so that fallback logic remains visible at the call site.
+</Aside>
+
+## Configure a fallback locale
+
+Add `fallback = "<locale>"` to the attribute. The locale you name must be one of the discovered locales, because it is validated against the same tree:
+
+```rust
+#[localizedir("mjml-dist/localized", fallback = "en")]
+enum AuthEmails {
+    Welcome,
+    PasswordReset,
+}
+
+fn render_email(template: AuthEmails, locale: &str) -> String {
+    // A request for "pt-BR" returns the "en" directory instead of panicking.
+    let dir = template.to_localized_dir(locale);
+    let body = dir
+        .get_file(template.full_path(locale).join("index.mjml"))
+        .expect("index.mjml is embedded");
+    String::from_utf8_lossy(body.contents()).into_owned()
+}
+```
+
+With a fallback configured, a panic still occurs when *both* the requested locale and the fallback are missing — and the panic message names both, plus the base path, so you can diagnose it from logs.
+
+<Aside type="caution">
+`fallback_locale()` returns the configured locale so your own negotiation logic can inspect it. There is no runtime locale normalization: `"FR"` does not match `"fr"`, and `"en-US"` does not match `"en"`. Match keys exactly, or negotiate the key yourself before the lookup.
+</Aside>
+
+## Negotiate locale keys yourself
+
+Because lookups match the discovered directory names exactly, the usual pattern is a small negotiation step in front of the lookup:
+
+```rust
+fn resolve_locale(requested: &str) -> &str {
+    let normalized = requested.to_lowercase();
+    // Exact hit first, then a language-prefix fallback such as en-US → en.
+    if AuthDirs::has_locale(&normalized) {
+        return Box::leak(normalized.into_boxed_str());
+    }
+    let language = normalized.split('-').next().unwrap_or(&normalized);
+    if AuthDirs::has_locale(language) {
+        return Box::leak(language.to_string().into_boxed_str());
+    }
+    AuthDirs::fallback_locale().unwrap_or("en")
+}
+```
+
+You own the policy; the crate owns the correctness of the tree. This split keeps `localizedir` allocation-free on the hot path and leaves BCP-47 complexity to the code that needs it.
+
+## Next steps
+
+<LinkCard label="The LocalizeDir trait" href="/reference/localize-dir-trait/" />
+<LinkCard label="Design decisions" href="/explanation/design-decisions/" />
