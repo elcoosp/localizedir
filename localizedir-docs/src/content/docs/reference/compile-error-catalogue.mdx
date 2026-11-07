@@ -1,0 +1,73 @@
+---
+title: Compile error catalogue
+description: Every compile-time diagnostic localizedir emits, with the exact message, the cause, and the fix.
+type: reference
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+
+`localizedir` validates everything at compile time and points each error at the offending token. This catalogue lists every diagnostic with its cause and fix. The wording is snapshot-tested, so it is stable across patch releases.
+
+## Filesystem diagnostics
+
+These errors point at the base-path string literal in the attribute.
+
+| Message | Cause | Fix |
+| :--- | :--- | :--- |
+| `base path does not exist: <path> (paths are resolved relative to the crate manifest directory)` | The base path does not exist on disk. | Create the directory, or fix the path. Remember that relative paths anchor at `CARGO_MANIFEST_DIR`. |
+| `base path is not a directory: <path>` | The base path exists but is a file. | Pass the directory that contains the locale subdirectories. |
+| ``no locale directories found in `<path>`; expected at least one subdirectory (e.g. `en/`)`` | The base path exists but contains no eligible locale subdirectory. | Add at least one locale directory such as `en/`. Names starting with `.` or `_`, plus `node_modules` and `target`, are skipped. |
+| `cannot read base path <path>: <io error>` | The directory cannot be read. | Check permissions on the base directory. |
+| `missing directories for some (locale, variant) pairs:` followed by a list of paths | At least one `(locale, variant)` directory is absent. | Create every listed directory, or remove the corresponding enum variants. |
+| ``environment variable `$VAR` (used in `<path>`) is not set`` | The base path uses `$VAR` interpolation and the variable is unset. | Export the variable before building, or inline the path. |
+| ``invalid `$` variable syntax in `<path>`; expected `$NAME` where NAME is alphanumeric or `_` `` | A bare `$` or a variable name with illegal characters. | Write variables as `$NAME` using letters, digits, and underscores. |
+| ``relative base paths require `CARGO_MANIFEST_DIR` to be set; build through cargo`` | A relative path is used outside a cargo build. | Build through `cargo`, or use an absolute path. |
+
+## Structural diagnostics
+
+These errors point at the enum or the offending variant.
+
+| Message | Cause | Fix |
+| :--- | :--- | :--- |
+| `` `localizedir` can only be applied to enums `` | The attribute decorates a struct, union, or other item. | Move the attribute onto an enum. |
+| `` `localizedir` does not support generic enums; the embedded directories are concrete `include_dir` trees `` | The enum has type parameters. | Remove the generics; the embedded tree is a concrete value. |
+| `` `localizedir` requires at least one variant `` | The enum body is empty. | Add at least one unit variant. |
+| `` `localizedir` only supports unit variants (no fields) `` | A variant carries fields. | Remove the fields; the macro maps names to directories, not data. |
+
+## Naming diagnostics
+
+| Message | Cause | Fix |
+| :--- | :--- | :--- |
+| `variants map to duplicate directory names: <names>` | Two variants resolve to the same directory name. | Rename a variant, adjust a `#[dir_name]` override, or change the `case` scheme. |
+| ``inferred parent folder is empty; rename the enum or pass `parent = "..."` `` | Inference produced an empty folder name. | Pass `parent = "..."` explicitly. |
+| ``directory name is empty; pass `#[dir_name = "..."]` with a non-empty name`` | A `#[dir_name]` override is an empty string. | Provide a non-empty directory name. |
+| ``unknown case `<value>`; expected one of snake, kebab, flat`` | The `case` value is not a known scheme. | Use `snake`, `kebab`, or `flat`. |
+
+## Attribute diagnostics
+
+These errors point at the offending option key or value.
+
+| Message | Cause | Fix |
+| :--- | :--- | :--- |
+| ``unknown option `<key>`; expected one of `fallback`, `parent`, `case` `` | The option name is misspelled. | Correct the spelling. |
+| ``duplicate option `<key>` `` | The same option appears twice. | Keep one occurrence. |
+| `expected string literal`-style errors for the base path or an option value | A non-literal expression stands where a string literal is required. | Use a string literal. |
+| ``expected `#[dir_name = "..."]` `` | The helper attribute is not in `NameValue` form (for example a bare `#[dir_name]`). | Write `#[dir_name = "name"]`. |
+| `` `dir_name` must be a string literal `` | The override value is an expression or a non-string literal. | Use a string literal. |
+| ``duplicate `#[dir_name]` attribute on variant`` | A variant carries the helper attribute twice. | Keep one override per variant. |
+
+## Panic messages (runtime)
+
+Two messages can surface at runtime, both from `to_localized_dir`:
+
+| Message | Trigger | Fix |
+| :--- | :--- | :--- |
+| ``localizedir: no embedded directory for locale `<locale>` (variant `<dir_name>`)`` | The locale is unknown and no `fallback` is configured. | Check `has_locale()` first, or configure a fallback. |
+| ``localizedir: no embedded directory for variant `<dir_name>` with locale `<locale>` nor fallback `<fallback>` (base: `<base_path>`)`` | Both the requested locale and the fallback are missing. | Fix the requested locale key; the fallback locale is always a discovered one, so this usually means a typo. |
+
+`try_to_localized_dir` never panics — it returns `None` instead.
+
+## Next steps
+
+<LinkCard label="Fix compile errors" href="/guides/fix-compile-errors/" />
+<LinkCard label="Attribute options" href="/reference/attribute/" />
