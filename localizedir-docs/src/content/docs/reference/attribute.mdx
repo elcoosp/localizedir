@@ -1,0 +1,70 @@
+---
+title: Attribute options
+description: Complete syntax and semantics of the #[localizedir(...)] attribute — the positional base path, fallback, parent, case, and the #[dir_name] helper attribute.
+type: reference
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+
+The `#[localizedir(...)]` attribute macro accepts one positional base path followed by optional comma-separated `key = "value"` options. Options may appear in any order, and a trailing comma is tolerated.
+
+```rust
+#[localizedir("templates/localized", fallback = "en", parent = "auth", case = "kebab")]
+enum AuthDirs {
+    Welcome,
+    ForgotPassword,
+}
+```
+
+## Options
+
+| Option | Type | Default | Meaning |
+| :--- | :--- | :--- | :--- |
+| `"<base path>"` | positional string literal | — (required) | Directory that contains one subdirectory per locale. Relative paths anchor at `$CARGO_MANIFEST_DIR`; `$VAR` interpolation follows `include_dir!` semantics. |
+| `fallback = "<locale>"` | string literal | none | Locale served by `to_localized_dir` when the requested locale has no embedded directory. Must be a discovered locale. `try_to_localized_dir` is unaffected. |
+| `parent = "<folder>"` | string literal | inferred from the enum name | Overrides the parent folder between the locale directory and the variant directories. An empty string is rejected. |
+| `case = "<scheme>"` | `"snake"` \| `"kebab"` \| `"flat"` | `"snake"` | Naming scheme that converts variant names into directory names. Unknown names are rejected at compile time. |
+
+## The base path
+
+The base path is kept exactly as written and returned verbatim by `LocalizeDir::base_path()`. For relative inputs the generated `include_dir!` call receives `$CARGO_MANIFEST_DIR/<path>` so the embed never depends on the compiler's working directory. Absolute inputs pass through unchanged.
+
+| Input | `include_dir!` argument | Validation path |
+| :--- | :--- | :--- |
+| `"locales"` | `$CARGO_MANIFEST_DIR/locales` | `<manifest>/locales` |
+| `"/srv/locales"` | `/srv/locales` | `/srv/locales` |
+| `"$DATA/locales"` | `$DATA/locales` | expanded `$DATA/locales` |
+
+## The #[dir_name] helper attribute
+
+Individual variants accept a `#[dir_name = "..."]` attribute that overrides the name produced by `case`:
+
+```rust
+#[localizedir("assets/localized")]
+enum MailTemplates {
+    #[dir_name = "welcome_v2"]
+    Welcome,
+    PasswordReset,
+}
+```
+
+Rules:
+
+- The value must be a string literal; expressions such as `#[dir_name = 1 + 2]` are rejected.
+- The attribute must use the `NameValue` form; a bare `#[dir_name]` is rejected.
+- A variant carries at most one `#[dir_name]`; duplicates are rejected.
+- An empty string is rejected.
+- The helper attribute is consumed by the macro and does not appear on the re-emitted enum; doc comments and other attributes are preserved.
+
+## What the attribute expands to
+
+For a valid input, the macro emits the enum (minus `#[dir_name]` attributes), a `#[doc(hidden)]` inherent block with the embedded `LOCALIZEDIR_BASE` directory, and the `LocalizeDir` implementation. See [How it works](/explanation/how-it-works/) for the full anatomy.
+
+## Input validation
+
+The attribute applies only to enums with unit variants. Non-enum targets, generic enums, empty enums, and fielded variants are all rejected — see the [compile error catalogue](/reference/compile-error-catalogue/) for every diagnostic.
+
+## Next steps
+
+<LinkCard label="The LocalizeDir trait" href="/reference/localize-dir-trait/" />
+<LinkCard label="Naming conventions" href="/reference/naming-conventions/" />
