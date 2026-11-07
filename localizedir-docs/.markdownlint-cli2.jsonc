@@ -1,0 +1,13 @@
+{
+	"globs": ["src/content/docs/**/*.md", "src/content/docs/**/*.mdx"],
+	"config": {
+		"default": true,
+		"MD013": false,
+		"MD033": false,
+		"MD024": { "siblings_only": true },
+		"MD025": false,
+		"MD041": false,
+		"MD046": false,
+		"MD036": false
+	}
+}
