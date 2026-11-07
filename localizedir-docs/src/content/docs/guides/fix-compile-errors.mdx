@@ -1,0 +1,61 @@
+---
+title: Fix compile errors
+description: Read localizedir's compile-time diagnostics and fix the causes — missing directories, duplicates, malformed attributes, and bad case values.
+type: how-to
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+This guide shows you how to read a `localizedir` diagnostic and fix its cause. Every check runs at compile time and points at the offending token, so the fix is usually one directory or one attribute away.
+
+## Read the diagnostic first
+
+`localizedir` errors always carry three pieces of information: what is wrong, where the offending token sits, and (for filesystem problems) the exact paths involved:
+
+```text
+error: missing directories for some (locale, variant) pairs:
+  - /path/to/crate/locales/fr/auth/forgot_password
+ --> src/lib.rs:3:15
+  |
+3 | #[localizedir("locales")]
+  |               ^^^^^^^^^
+```
+
+The span (here `^^^^^^^^^`) marks the token to look at — the base path for filesystem problems, the variant for per-variant problems, the attribute key for option problems.
+
+## Fix the most common errors
+
+### Missing (locale, variant) directories
+
+The message lists every missing pair. Create the listed directories — in this example, `locales/fr/auth/forgot_password/` — or remove the corresponding enum variant if the template no longer exists.
+
+### Base path does not exist
+
+The message reads `base path does not exist: <path>` and reminds you that relative paths resolve against the crate manifest directory. Check for a typo in the path, and remember that `cargo` anchors relative paths at `CARGO_MANIFEST_DIR`, not at the file the macro appears in.
+
+### Duplicate directory names
+
+Two variants resolve to the same directory name, which one embedded directory cannot serve. The message reads `variants map to duplicate directory names: welcome`. Rename a variant, adjust a `#[dir_name = "..."]` override, or change the `case` scheme.
+
+### Unknown or duplicate attribute option
+
+Typos produce ``unknown option `fallbackx`; expected one of `fallback`, `parent`, `case` ``, and repeating an option produces ``duplicate option `fallback` ``. Use each option at most once and check the spelling against the [attribute reference](/reference/attribute/).
+
+### Unknown case value
+
+`case = "camel"` produces ``unknown case `camel`; expected one of snake, kebab, flat``. Only the three scheme names are valid, in lowercase.
+
+## Then consult the full catalogue
+
+The catalogue lists every diagnostic the macro can emit, with the cause and the fix for each:
+
+<LinkCard label="Compile error catalogue" href="/reference/compile-error-catalogue/" />
+
+<Aside type="tip">
+The crate's own test suite snapshots these diagnostics as [trybuild](https://docs.rs/trybuild) UI tests, so the wording you see in the catalogue is stable across patch releases.
+</Aside>
+
+## Next steps
+
+<LinkCard label="Attribute options" href="/reference/attribute/" />
+<LinkCard label="Organize your directories" href="/guides/organize-your-directories/" />
