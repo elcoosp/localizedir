@@ -1,0 +1,100 @@
+---
+title: Organize your localized directories
+description: Lay out the base directory tree so localizedir discovers locales correctly — paths, ignored directories, workspace anchoring, and $VAR interpolation.
+type: how-to
+---
+
+import { Aside, FileTree, LinkCard } from '@astrojs/starlight/components';
+
+This guide shows you how to lay out and place your localized directory tree so the macro discovers every locale and fails early on structural mistakes.
+
+## Understand the required shape
+
+The macro expects exactly this nesting under your base path:
+
+```text
+<base path>/<locale>/<parent folder>/<variant directory>/
+```
+
+- **Locale** — one subdirectory of the base path, discovered by scanning. The name is the exact lookup key at runtime (`fr`, `pt-BR`, …).
+- **Parent folder** — inferred from the enum name (`AuthDirs` → `auth`) unless you override it with `parent = "..."`.
+- **Variant directory** — one per enum variant, named through the `case` scheme or `#[dir_name = "..."]`.
+
+Every `(locale, variant)` pair must exist before the code compiles. Missing pairs produce a compile error that lists each missing path.
+
+## Place the base path
+
+Pass the base path as the first attribute argument. Relative paths anchor at the *crate manifest directory* (`CARGO_MANIFEST_DIR`), not at the compiler's working directory:
+
+```rust
+#[localizedir("tests/fixtures/localized")] // → $CARGO_MANIFEST_DIR/tests/fixtures/localized
+enum AuthDirs {
+    Welcome,
+}
+```
+
+This anchoring is what makes the macro reliable inside cargo workspaces, where the compiler's working directory is the workspace root rather than the package root. Absolute paths are used as-is.
+
+## Keep directories out of locale discovery
+
+Locale discovery scans the immediate subdirectories of the base path. The scan skips:
+
+- directories whose names start with `.` (`.git`, `.staging`, …)
+- directories whose names start with `_` (`_partials`, `_drafts`, …)
+- `node_modules` and `target`
+
+Everything else that is a real subdirectory becomes a locale, so keep helper material inside one of the ignored names:
+
+<FileTree>
+- locales/
+  - en/
+  - fr/
+  - _partials/      ← ignored: shared snippets live here
+  - .templates/     ← ignored: authoring material lives here
+</FileTree>
+
+<Aside type="caution">
+Files directly under the base path are ignored during discovery, but the whole base directory is still embedded. Do not place secrets or bulky scratch files there.
+</Aside>
+
+## Interpolate environment variables
+
+Base paths support `$VAR` interpolation with the same rules as `include_dir!`: a `$` followed by ASCII letters, digits, or underscores names one variable, which is looked up once with no recursive expansion.
+
+```rust
+#[localizedir("$CARGO_MANIFEST_DIR/locales")]
+enum AuthDirs {
+    Welcome,
+}
+
+#[localizedir("$TEMPLATE_ROOT/auth")]
+enum MailDirs {
+    Welcome,
+}
+```
+
+An unset variable fails the compile with a message naming the variable and the attribute that used it, so a misconfigured CI machine surfaces immediately instead of embedding the wrong tree.
+
+## Share one tree across an enum set
+
+Multiple enums can point at the same base path with different `parent` folders:
+
+```rust
+#[localizedir("locales", parent = "auth")]
+enum AuthDirs {
+    Welcome,
+    ForgotPassword,
+}
+
+#[localizedir("locales", parent = "email")]
+enum MailDirs {
+    Newsletter,
+}
+```
+
+Both enums embed the same tree once and navigate it independently.
+
+## Next steps
+
+<LinkCard label="Control directory names" href="/guides/control-directory-names/" />
+<LinkCard label="Attribute options" href="/reference/attribute/" />
