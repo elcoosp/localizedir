@@ -1,0 +1,65 @@
+---
+title: Naming conventions
+description: How enum and variant names become directory names — the stripped suffix table, the case schemes, acronym handling, and raw identifiers.
+type: reference
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+
+The macro derives directory names from your Rust identifiers through two independent rules: parent-folder inference from the enum name, and per-variant directory names from the `case` scheme. Both go through the [convert_case](https://crates.io/crates/convert_case) crate, which handles acronym-bearing names correctly.
+
+## Parent folder inference
+
+The parent folder is inferred from the enum name by stripping the longest matching suffix from this table and converting the remainder to `snake_case`:
+
+| Enum name | Inferred parent |
+| :--- | :--- |
+| `AuthDirs` | `auth` |
+| `EmailTemplates` | `email` |
+| `LegalDocs` | `legal` |
+| `InvoiceDocuments` | `invoice` |
+| `UserDirectories` | `user` |
+| `UserProfileDirs` | `user_profile` |
+| `BrandAssets` | `brand` |
+| `StaticFiles` | `static` |
+| `AppLocales` | `app` |
+| `APIResponseDirs` | `api_response` |
+| `MJMLTemplates` | `mjml` |
+
+The stripped suffixes, matched longest-first:
+
+`Directories`, `Templates`, `Documents`, `Locales`, `Template`, `Document`, `Locale`, `Dirs`, `Docs`, `Dir`, `Assets`, `Files`, `Asset`, `File`
+
+When stripping would leave nothing — an enum literally named `Dirs`, `Templates`, or `Weird` — the full name is used instead (`dirs`, `templates`, `weird`). An empty result cannot occur, and `parent = "..."` overrides inference entirely.
+
+## Variant directory names
+
+Each variant name passes through the scheme selected by `case`:
+
+| Variant | `snake` (default) | `kebab` | `flat` |
+| :--- | :--- | :--- | :--- |
+| `Welcome` | `welcome` | `welcome` | `welcome` |
+| `ForgotPassword` | `forgot_password` | `forgot-password` | `forgotpassword` |
+| `TermsOfService` | `terms_of_service` | `terms-of-service` | `termsofservice` |
+| `HtmlReport` | `html_report` | `html-report` | `htmlreport` |
+| `APIKey` | `api_key` | `api-key` | `apikey` |
+
+Only the three scheme names above are accepted, in lowercase; anything else fails the compile with ``unknown case `camel`; expected one of snake, kebab, flat``.
+
+## Overrides
+
+Two mechanisms beat the defaults, in this order of precedence:
+
+1. `#[dir_name = "..."]` on a variant — wins over the `case` scheme for that variant.
+2. `parent = "..."` on the attribute — wins over enum-name inference for the parent folder.
+
+## Edge cases the macro handles
+
+- **Acronyms** — `convert_case` treats consecutive capitals as one word, so `APIResponseDirs` becomes `api_response`, not `a_p_i_response`.
+- **Raw identifiers** — a variant written `r#Type` converts to `type`, without the `r#` prefix.
+- **Duplicate results** — two variants resolving to the same directory name fail the compile with a message naming the colliding directory.
+
+## Next steps
+
+<LinkCard label="Control directory names" href="/guides/control-directory-names/" />
+<LinkCard label="Attribute options" href="/reference/attribute/" />
