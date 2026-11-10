@@ -1,21 +1,41 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
+import astroTakumi from 'astro-takumi';
+import fs from 'node:fs';
+import { makeRender } from './src/og-render.mjs';
 import linksValidator from "starlight-links-validator";
 import imageZoom from "starlight-image-zoom";
 
+const __logoB64 = fs.readFileSync("./src/assets/logo.png").toString("base64");
+const __render = makeRender({
+  logoDataUrl: "data:image/png;base64," + __logoB64,
+  accentHex: "#a27d11",
+  accentHexA12: "#a27d111a",
+  domain: "localizedir.vercel.app",
+  projectName: "localizedir",
+});
+
 export default defineConfig({
+	vite: {
+		ssr: { external: ["jsdom", "astro-takumi"] },
+	},
         // Canonical site URL. GitHub Pages is the convention for this repository;
         // update this value (and add `base` if needed) when the production host
         // is chosen. Required so Starlight's injected sitemap integration works.
-        site: "https://elcoosp.github.io/localizedir",
+        site: 'https://localizedir.vercel.app',
         integrations: [
                 starlight({
+			routeMiddleware: "./src/routeData.ts",
+                        expressiveCode: {
+                        	themes: ['github-light', 'github-dark'],
+                        },
                         title: "localizedir",
                         description:
                                 "Compile-time localized directory inclusion for Rust: embed your localized directories once and generate locale-aware accessors.",
-                        favicon: "/favicon.png",
-                        logo: { src: "./src/assets/logo.png" },
+                        favicon: '/favicon.png',
+
+                        logo: { src: './src/assets/logo.png' },
                         customCss: ["./src/styles/custom.css"],
                         social: [
                                 {
@@ -61,5 +81,16 @@ export default defineConfig({
                                 },
                         ],
                 }),
-        ],
+        
+		astroTakumi({
+			options: {
+				domBackend: "linkedom",
+				fonts: [fs.readFileSync("./node_modules/@fontsource/roboto/files/roboto-latin-400-normal.woff2")],
+				width: 1200,
+				height: 630,
+				format: "png",
+			},
+			render: __render,
+		}),
+	],
 });
