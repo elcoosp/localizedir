@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `available_locales()`, `has_locale(locale)`, `fallback_locale()`
   - `base_path()`, `parent_folder()`, `dir_name()`, `full_path(locale)`
 The macro now embeds the whole base directory exactly once via a single `include_dir!` and navigates it at runtime, instead of expanding `include_dir!` per (variant, locale) pair. This keeps compile times flat as the template tree grows.
+- *(og)* Per-page OG images via astro-takumi fork (linkedom backend)
 
 
 ### Miscellaneous Tasks
@@ -92,6 +93,8 @@ Concurrency cancels in-flight runs on the same ref.
 - *(docs)* Define schemas matching diataxis requirements
 - *(docs)* Specify compiler ambient global types context
 - *(docs)* Declare upstream global base context definitions
+- *(scripts)* Add qa-components.mjs
+- *(scripts)* Add bootstrap-artifacts.mjs
 
 
 ### Refactor
@@ -177,6 +180,11 @@ updated-dependencies:
 ...
 - *(docs)* Initialize package layout and scripts - Define dev dependencies, engine requirements, and test targets.
 - *(docs)* Lock package dependencies via pnpm
+
+
+### Content
+
+- Docs + frontmatter YAML quoting fixes
 
 
 
