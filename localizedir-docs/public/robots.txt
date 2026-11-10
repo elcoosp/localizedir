@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://elcoosp.github.io/localizedir/sitemap-index.xml
+Sitemap: https://localizedir.vercel.app/sitemap-index.xml
