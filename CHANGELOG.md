@@ -55,6 +55,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `base_path()`, `parent_folder()`, `dir_name()`, `full_path(locale)`
 The macro now embeds the whole base directory exactly once via a single `include_dir!` and navigates it at runtime, instead of expanding `include_dir!` per (variant, locale) pair. This keeps compile times flat as the template tree grows.
 - *(og)* Per-page OG images via astro-takumi fork (linkedom backend)
+- *(og)* Adopt @elcoosp/docs-toolkit — remove per-project OG boilerplate - - astro.config.mjs uses defineDocsConfig (25-50 lines vs 80-110)
+- src/routeData.mjs is 1-line re-export (was 17-line copy)
+- deleted src/og-render.jsx, og-render.mjs, routeData.ts
+- dropped esbuild + @fontsource/roboto (bundled by toolkit)
+- accent derived from logo (was hard-coded hex)
+- removed v12-refined micro-stamp from OG image footer
 
 
 ### Miscellaneous Tasks
