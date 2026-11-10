@@ -1,0 +1,19 @@
+# localizedir
+
+> AI-agent index.
+
+- [404](/404/)
+- [Design decisions](/explanation/design-decisions/) — Why localizedir looks the way it does — Option-first lookups, fallback at the panicking API only, plain locale keys, and the features that were rejected.
+- [How localizedir works](/explanation/how-it-works/) — The anatomy of a #[localizedir] expansion — path anchoring, compile-time locale discovery, validation, and the generated code.
+- [Control directory names](/guides/control-directory-names/) — Map enum names and variants onto the directory names you want — parent-folder inference, the case schemes, and per-variant #[dir_name] overrides.
+- [Fix compile errors](/guides/fix-compile-errors/) — Read localizedir's compile-time diagnostics and fix the causes — missing directories, duplicates, malformed attributes, and bad case values.
+- [Handle unknown locales at runtime](/guides/handle-unknown-locales/) — Decide between the panicking and Option-returning lookups, configure a fallback locale, and understand why lookups match exactly.
+- [Organize your localized directories](/guides/organize-your-directories/) — Lay out the base directory tree so localizedir discovers locales correctly — paths, ignored directories, workspace anchoring, and $VAR interpolation.
+- [localizedir](/) — Compile-time localized directory inclusion for Rust — embed once, look up per locale, and fail the build on structural mistakes.
+- [Attribute options](/reference/attribute/) — Complete syntax and semantics of the #[localizedir(...)] attribute — the positional base path, fallback, parent, case, and the #[dir_name] helper attribute.
+- [Compile error catalogue](/reference/compile-error-catalogue/) — Every compile-time diagnostic localizedir emits, with the exact message, the cause, and the fix.
+- [include_dir interop](/reference/include-dir-interop/) — How generated code relates to include_dir — the LOCALIZEDIR_BASE embed, root-relative path semantics, and reading files from returned directories.
+- [The LocalizeDir trait](/reference/localize-dir-trait/) — Every method of the LocalizeDir trait — signature, return type, panics, defaults, and examples.
+- [Naming conventions](/reference/naming-conventions/) — How enum and variant names become directory names — the stripped suffix table, the case schemes, acronym handling, and raw identifiers.
+- [Release notes](/reference/release-notes/) — What shipped in localizedir 0.2.0 and where to follow new releases.
+- [Getting started with localizedir](/tutorials/getting-started/) — Build a working localized enum from an empty crate in five steps — prepare the tree, add dependencies, annotate, look up, verify.

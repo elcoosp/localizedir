@@ -1,20 +1,18 @@
 ---
 title: Attribute options
-description: Complete syntax and semantics of the #[localizedir(...)] attribute — the positional base path, fallback, parent, case, and the #[dir_name] helper attribute.
+description: 'Complete syntax and semantics of the #[localizedir(...)] attribute — the positional base path, fallback, parent, case, and the #[dir_name] helper attribute.'
 type: reference
 ---
 
-import { LinkCard } from '@astrojs/starlight/components';
+import { Code, LinkCard } from '@astrojs/starlight/components';
 
 The `#[localizedir(...)]` attribute macro accepts one positional base path followed by optional comma-separated `key = "value"` options. Options may appear in any order, and a trailing comma is tolerated.
 
-```rust
-#[localizedir("templates/localized", fallback = "en", parent = "auth", case = "kebab")]
+<Code lang="rust" code={`#[localizedir("templates/localized", fallback = "en", parent = "auth", case = "kebab")]
 enum AuthDirs {
     Welcome,
     ForgotPassword,
-}
-```
+}`} />
 
 ## Options
 
@@ -39,14 +37,12 @@ The base path is kept exactly as written and returned verbatim by `LocalizeDir::
 
 Individual variants accept a `#[dir_name = "..."]` attribute that overrides the name produced by `case`:
 
-```rust
-#[localizedir("assets/localized")]
+<Code lang="rust" code={`#[localizedir("assets/localized")]
 enum MailTemplates {
     #[dir_name = "welcome_v2"]
     Welcome,
     PasswordReset,
-}
-```
+}`} />
 
 Rules:
 

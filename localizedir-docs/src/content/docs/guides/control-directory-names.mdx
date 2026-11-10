@@ -1,10 +1,10 @@
 ---
 title: Control directory names
-description: Map enum names and variants onto the directory names you want — parent-folder inference, the case schemes, and per-variant #[dir_name] overrides.
+description: 'Map enum names and variants onto the directory names you want — parent-folder inference, the case schemes, and per-variant #[dir_name] overrides.'
 type: how-to
 ---
 
-import { Aside, LinkCard } from '@astrojs/starlight/components';
+import { Aside, Code, LinkCard } from '@astrojs/starlight/components';
 
 This guide shows you every lever that maps Rust names onto directory names, and when to reach for each one.
 
@@ -12,15 +12,13 @@ This guide shows you every lever that maps Rust names onto directory names, and 
 
 By default the macro infers the parent folder from the enum name by stripping a known suffix and converting the remainder to `snake_case`, and turns each variant name into a `snake_case` directory name:
 
-```rust
-#[localizedir("locales")]
+<Code lang="rust" code={`#[localizedir("locales")]
 enum UserProfileDirs {
     ForgotPassword,
 }
 // parent folder: "user_profile"
 // ForgotPassword → forgot_password
-// looks up: <base>/<locale>/user_profile/forgot_password
-```
+// looks up: <base>/<locale>/user_profile/forgot_password`} />
 
 The inference handles acronyms correctly (`APIResponseDirs` → `api_response`, `MJMLTemplates` → `mjml`). See the [naming conventions reference](/reference/naming-conventions/) for the full suffix table.
 
@@ -28,15 +26,13 @@ The inference handles acronyms correctly (`APIResponseDirs` → `api_response`, 
 
 When your directories use a different convention, set `case` to `snake`, `kebab`, or `flat`:
 
-```rust
-#[localizedir("assets/legal", case = "kebab")]
+<Code lang="rust" code={`#[localizedir("assets/legal", case = "kebab")]
 enum LegalDocs {
     TermsOfService,
     PrivacyPolicy,
 }
 // TermsOfService → terms-of-service
-// PrivacyPolicy  → privacy-policy
-```
+// PrivacyPolicy  → privacy-policy`} />
 
 <Aside type="tip">
 `flat` removes separators entirely (`ForgotPassword` → `forgotpassword`). It is a useful last resort when an existing tree was generated from concatenated names.
@@ -46,16 +42,14 @@ enum LegalDocs {
 
 Set `#[dir_name = "..."]` on a variant when one directory does not follow the scheme:
 
-```rust
-#[localizedir("assets/localized")]
+<Code lang="rust" code={`#[localizedir("assets/localized")]
 enum MailTemplates {
     #[dir_name = "welcome_v2"]
     Welcome,
     PasswordReset,
 }
 // Welcome        → welcome_v2 (override wins)
-// PasswordReset  → password_reset (case default still applies)
-```
+// PasswordReset  → password_reset (case default still applies)`} />
 
 The macro strips the helper attribute from the re-emitted enum, so nothing leaks into your crate's namespace. Other attributes — including doc comments — are preserved.
 
@@ -63,27 +57,23 @@ The macro strips the helper attribute from the re-emitted enum, so nothing leaks
 
 Set `parent = "..."` when the inferred folder does not match your tree, or when several enums share one base path:
 
-```rust
-#[localizedir("locales", parent = "auth")]
+<Code lang="rust" code={`#[localizedir("locales", parent = "auth")]
 enum WhateverDirs {
     Welcome,
 }
-// looks up: <base>/<locale>/auth/welcome
-```
+// looks up: <base>/<locale>/auth/welcome`} />
 
 ## Avoid duplicate directory names
 
 Two variants that resolve to the same directory name fail the compile, because one embedded directory could not serve both variants:
 
-```rust
-#[localizedir("locales")]
+<Code lang="rust" code={`#[localizedir("locales")]
 enum AuthDirs {
     #[dir_name = "welcome"]
     Welcome,
     #[dir_name = "welcome"]
     Hello, // error: variants map to duplicate directory names: welcome
-}
-```
+}`} />
 
 Fix the collision by renaming a variant, changing a `#[dir_name]` override, or pointing one variant at a different `case`.
 

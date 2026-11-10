@@ -1,9 +1,11 @@
 ---
 title: localizedir
+template: splash
 description: Compile-time localized directory inclusion for Rust — embed once, look up per locale, and fail the build on structural mistakes.
 type: explanation
 pagefind: true
 hero:
+  title: "localizedir"
   tagline: Compile-time localized directory inclusion for Rust
   image:
     file: ../../assets/logo.png
@@ -18,12 +20,11 @@ hero:
       variant: minimal
 ---
 
-import { Aside, Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Aside, Card, CardGrid, Code, LinkButton, LinkCard } from '@astrojs/starlight/components';
 
 `localizedir` turns an enum into locale-aware accessors over directories embedded with [include_dir](https://crates.io/crates/include_dir). You annotate an enum, the macro embeds your localized directory tree once at compile time, and every lookup afterwards is a cheap navigation inside that tree — no runtime file I/O, no boilerplate.
 
-```rust
-use localizedir::{LocalizeDir, localizedir};
+<Code lang="rust" code={`use localizedir::{LocalizeDir, localizedir};
 
 #[localizedir("tests/fixtures/localized")]
 enum AuthDirs {
@@ -32,8 +33,7 @@ enum AuthDirs {
 }
 
 let dir = AuthDirs::Welcome.to_localized_dir("fr");
-assert!(dir.get_file("fr/auth/welcome/note.txt").is_some());
-```
+assert!(dir.get_file("fr/auth/welcome/note.txt").is_some());`} />
 
 Locales are discovered from the filesystem at compile time. Typos in the directory structure fail the build with an error pointing at the offending token; unknown locales at runtime return `Option` instead of a file-not-found surprise.
 
@@ -57,6 +57,8 @@ Locales are discovered from the filesystem at compile time. Typos in the directo
     <LinkCard label="Read the explanations" href="/explanation/how-it-works/" />
   </Card>
 </CardGrid>
+
+<LinkButton href="/tutorials/getting-started/" icon="right-arrow">Start the tutorial</LinkButton>
 
 ## Why localizedir
 

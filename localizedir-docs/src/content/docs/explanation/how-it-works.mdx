@@ -1,10 +1,10 @@
 ---
 title: How localizedir works
-description: The anatomy of a #[localizedir] expansion — path anchoring, compile-time locale discovery, validation, and the generated code.
+description: "The anatomy of a #[localizedir] expansion — path anchoring, compile-time locale discovery, validation, and the generated code."
 type: explanation
 ---
 
-import { LinkCard, Steps } from '@astrojs/starlight/components';
+import { Code, LinkCard, Steps } from '@astrojs/starlight/components';
 
 This page explains what happens between the attribute you write and the code the compiler sees. Understanding the pipeline helps you predict compile errors, reason about binary size, and use the generated API without surprises.
 
@@ -27,35 +27,33 @@ Only after all four stages succeed does code generation start — so a generated
 
 The expansion contains three pieces:
 
-```rust
-// 1. Your enum, re-emitted without the #[dir_name] helper attributes.
+<Code lang="rust" code={`// 1. Your enum, re-emitted without the #[dir_name] helper attributes.
 //    Doc comments and other attributes are preserved.
 
 // 2. A hidden inherent block: the single embed plus a path helper.
 #[doc(hidden)]
 impl AuthDirs {
     const LOCALIZEDIR_BASE: ::include_dir::Dir<'static> =
-        ::include_dir::include_dir!("$CARGO_MANIFEST_DIR/tests/fixtures/localized");
+                    ::include_dir::include_dir!("$CARGO_MANIFEST_DIR/tests/fixtures/localized");
 
     fn localizedir_path(&self, locale: &str) -> ::std::path::PathBuf {
-        ::std::path::Path::new(locale)
-            .join(Self::parent_folder())
-            .join(self.dir_name())
+                    ::std::path::Path::new(locale)
+                                    .join(Self::parent_folder())
+                                    .join(self.dir_name())
     }
 }
 
 // 3. The LocalizeDir impl: metadata from literals, lookups via get_dir.
 impl ::localizedir::LocalizeDir for AuthDirs {
     fn available_locales() -> &'static [&'static str] {
-        &["de", "en", "fr"] // discovered at compile time, sorted
+                    &["de", "en", "fr"] // discovered at compile time, sorted
     }
     fn try_to_localized_dir(&self, locale: &str) -> Option<&'static ::include_dir::Dir<'static>> {
-        Self::LOCALIZEDIR_BASE.get_dir(self.localizedir_path(locale))
+                    Self::LOCALIZEDIR_BASE.get_dir(self.localizedir_path(locale))
     }
     // … base_path, parent_folder, dir_name, full_path, and the
     //   fallback override only when fallback = "..." is configured.
-}
-```
+}`} />
 
 Because the generated code is plain, documented Rust, rust-analyzer navigates it like hand-written code — go-to-definition lands on real methods, not macro internals.
 

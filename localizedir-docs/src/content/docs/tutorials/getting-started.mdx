@@ -4,7 +4,7 @@ description: Build a working localized enum from an empty crate in five steps â€
 type: tutorial
 ---
 
-import { Aside, FileTree, LinkCard, TabItem, Tabs } from '@astrojs/starlight/components';
+import { Aside, Code, FileTree, LinkCard, TabItem, Tabs } from '@astrojs/starlight/components';
 
 This tutorial walks you through your first `localizedir` enum, from an empty crate to locale-aware directory lookups that compile and run. You embed a small localized template tree for an auth feature and read files back out of it in three languages.
 
@@ -17,9 +17,7 @@ This tutorial walks you through your first `localizedir` enum, from an empty cra
 
 Start from a fresh binary crate:
 
-```bash
-cargo new demo && cd demo
-```
+<Code lang="bash" code={`cargo new demo && cd demo`} />
 
 ## 2. Prepare the localized directory tree
 
@@ -53,16 +51,12 @@ Put distinguishable content in each file â€” for example `en:auth:welcome` in `e
 
 <Tabs>
   <TabItem label="cargo add">
-    ```bash
-    cargo add localizedir@0.2 include_dir@0.7
-    ```
+<Code lang="bash" code={` cargo add localizedir@0.2 include_dir@0.7`} />
   </TabItem>
   <TabItem label="Cargo.toml">
-    ```toml
-    [dependencies]
-    localizedir = "0.2"
-    include_dir = "0.7"
-    ```
+<Code lang="toml" code={`  [dependencies]
+  localizedir = "0.2"
+  include_dir = "0.7"`} />
   </TabItem>
 </Tabs>
 
@@ -74,8 +68,7 @@ You need both crates. The macro expands to `include_dir::include_dir!(...)`, whi
 
 Replace `src/main.rs` with:
 
-```rust
-use localizedir::{LocalizeDir, localizedir};
+<Code lang="rust" code={`use localizedir::{LocalizeDir, localizedir};
 
 #[localizedir("tests/fixtures/localized")]
 enum AuthDirs {
@@ -87,35 +80,30 @@ fn main() {
     // Look up the embedded directory for one locale and variant.
     let dir = AuthDirs::Welcome.to_localized_dir("fr");
     let note = dir
-        .get_file(AuthDirs::Welcome.full_path("fr").join("note.txt"))
-        .expect("note.txt is embedded");
+                    .get_file(AuthDirs::Welcome.full_path("fr").join("note.txt"))
+                    .expect("note.txt is embedded");
     println!("fr welcome note: {}", String::from_utf8_lossy(note.contents()));
 
     // Compile-time metadata: no runtime scanning anywhere.
     println!("locales: {:?}", AuthDirs::available_locales());
     println!("parent folder: {}", AuthDirs::parent_folder());
     println!("welcome dir name: {}", AuthDirs::Welcome.dir_name());
-}
-```
+}`} />
 
 The attribute consumes the enum, re-emits it, and generates the `LocalizeDir` implementation. `AuthDirs` keeps working as a plain enum in every other respect.
 
 ## 5. Run and verify
 
-```bash
-cargo run
-```
+<Code lang="bash" code={`cargo run`} />
 
 You should see output like this (locale order comes from the filesystem scan and is always sorted):
 
-```ansi
-[1m[32m   Compiling[0m demo v0.1.0 (/path/to/demo)
-[1m[32m    Running[0m `target/debug/demo`
+<Code lang="ansi" code={`[1m[32m   Compiling[0m demo v0.1.0 (/path/to/demo)
+[1m[32m    Running[0m \`target/debug/demo\`
 fr welcome note: fr:auth:welcome
 locales: ["de", "en", "fr"]
 parent folder: auth
-welcome dir name: welcome
-```
+welcome dir name: welcome`} />
 
 Break something on purpose to see the compile-time guarantee: delete `fr/auth/forgot_password/` and run `cargo run` again. The build now fails with a message listing every missing `(locale, variant)` directory and pointing at the attribute. Restore the directory when you are done.
 
