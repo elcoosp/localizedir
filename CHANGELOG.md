@@ -61,6 +61,7 @@ The macro now embeds the whole base directory exactly once via a single `include
 - dropped esbuild + @fontsource/roboto (bundled by toolkit)
 - accent derived from logo (was hard-coded hex)
 - removed v12-refined micro-stamp from OG image footer
+- *(og)* JSON-LD + 404 card + robots.txt + .qa gitignore (toolkit 0.2.1)
 
 
 ### Miscellaneous Tasks
