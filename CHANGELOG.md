@@ -102,6 +102,7 @@ Concurrency cancels in-flight runs on the same ref.
 - *(docs)* Declare upstream global base context definitions
 - *(scripts)* Add qa-components.mjs
 - *(scripts)* Add bootstrap-artifacts.mjs
+- *(toolkit)* Bump to 0.2.3 — TechArticle restored, home breadcrumb skip
 
 
 ### Refactor
