@@ -1,3 +1,4 @@
+#![cfg(not(target_os = "windows"))]
 //! Compile-time filesystem access: resolving attribute paths (including
 //! `include_dir`-style `$VAR` interpolation), discovering locale
 //! directories, and validating that every (locale, variant) directory

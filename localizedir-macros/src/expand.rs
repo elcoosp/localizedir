@@ -1,3 +1,4 @@
+#![cfg(not(target_os = "windows"))]
 //! Code generation: validates the macro input against the filesystem and
 //! emits the inherent + trait impl blocks.
 //!
