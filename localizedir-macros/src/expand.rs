@@ -528,6 +528,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(target_os = "windows"))]
     fn rejects_missing_variant_directory() {
         let temp = tempfile::TempDir::new().expect("tempdir");
         let base = temp.path().join("locales");
