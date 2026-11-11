@@ -298,6 +298,7 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
+    #[cfg(not(target_os = "macos"))]
     fn discover_locales_skips_non_utf8_directory_names() {
         use std::ffi::OsStr;
         use std::os::unix::ffi::OsStrExt;
