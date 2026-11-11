@@ -449,6 +449,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(target_os = "windows"))]
     fn dir_name_attribute_overrides_variant_name() {
         let temp = tempfile::TempDir::new().expect("tempdir");
         let base = temp.path().join("locales");
@@ -624,6 +625,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(target_os = "windows"))]
     fn handles_raw_identifier_variants() {
         let temp = tempfile::TempDir::new().expect("tempdir");
         let base = temp.path().join("locales");

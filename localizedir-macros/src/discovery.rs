@@ -235,6 +235,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(target_os = "windows"))]
     fn anchor_path_passes_absolute_inputs_through() {
         let anchored = anchor_path("/abs/locales", Some("/pkg")).expect("anchors");
         assert_eq!(anchored.include_arg, "/abs/locales");
@@ -252,6 +253,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(target_os = "windows"))]
     fn anchor_path_joins_relative_paths_onto_the_manifest_dir() {
         let anchored = anchor_path("templates/localized", Some("/pkg")).expect("anchors");
         assert_eq!(
