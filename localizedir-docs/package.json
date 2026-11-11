@@ -1,7 +1,7 @@
 {
   "name": "localizedir-docs",
   "version": "0.2.0",
-  "description": "Documentation site for localizedir — compile-time localized directory inclusion for Rust",
+  "description": "Documentation site for localizedir \u2014 compile-time localized directory inclusion for Rust",
   "private": true,
   "type": "module",
   "scripts": {
@@ -32,7 +32,7 @@
     "react-dom": "^19.3.1",
     "sharp": "0.35.5",
     "typescript": "6.0.3",
-    "@elcoosp/docs-toolkit": "github:elcoosp/docs-toolkit#8084231ffe3841ce1f199644aeb0c0af71b137bb"
+    "@elcoosp/docs-toolkit": "github:elcoosp/docs-toolkit#5f81909ef959d9ea743bbaf54013280addc91d06"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
