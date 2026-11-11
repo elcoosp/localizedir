@@ -4,6 +4,7 @@ import imageZoom from "starlight-image-zoom";
 
 
 export default await defineDocsConfig({
+  llmsTxt: {},
   changelog: { repo: 'elcoosp/localizedir' },
   site: 'https://localizedir.vercel.app',
   domain: 'localizedir.vercel.app',
