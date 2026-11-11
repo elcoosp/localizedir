@@ -73,7 +73,8 @@ fn embedded_directories_expose_their_files() {
     let file = dir
         .get_file(AuthDirs::ForgotPassword.full_path("en").join("note.txt"))
         .expect("embedded file");
-    assert_eq!(file.contents_utf8(), Some("en:auth:forgot_password\n"));
+    let contents = file.contents_utf8().map(|s| s.replace("\r\n", "\n"));
+    assert_eq!(contents, Some("en:auth:forgot_password\n".to_string()));
 }
 
 #[test]
