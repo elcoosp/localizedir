@@ -42,8 +42,9 @@ fn panicking_lookup_falls_back_to_the_configured_locale() {
     assert_eq!(
         dir.get_file(EmailFallback::Promotional.full_path("en").join("note.txt"))
             .expect("file")
-            .contents_utf8(),
-        Some("en:email:promotional\n")
+            .contents_utf8()
+            .map(|s| s.replace("\r\n", "\n")),
+        Some("en:email:promotional\n".to_string())
     );
 }
 
