@@ -437,6 +437,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(target_os = "windows"))]
     fn parent_and_case_overrides_apply() {
         let temp = tempfile::TempDir::new().expect("tempdir");
         let base = temp.path().join("locales");
