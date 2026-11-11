@@ -380,7 +380,8 @@ mod tests {
     }
 
     fn temp_base(attr_template: &str, base: &Path) -> String {
-        attr_template.replace("{{BASE}}", &base.to_string_lossy())
+        let base_str = base.to_string_lossy().replace('\\', "/");
+        attr_template.replace("{{BASE}}", &base_str)
     }
 
     #[test]
