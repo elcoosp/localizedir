@@ -6,11 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && node scripts/build-llms.mjs",
     "preview": "astro preview",
     "check": "astro sync && tsc --noEmit",
     "lint": "markdownlint-cli2",
-    "qa": "node scripts/qa-screenshots.mjs"
+    "qa": "node scripts/qa-screenshots.mjs",
+    "build": "astro build"
   },
   "engines": {
     "node": ">=22.0.0"
