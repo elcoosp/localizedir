@@ -10,7 +10,7 @@ repository.workspace = true
 homepage.workspace = true
 documentation.workspace = true
 readme.workspace = true
-keywords.workspace = true
+keywords = ["i18n", "l10n", "localization", "internationalization", "locale"]
 categories.workspace = true
 
 [dependencies]
