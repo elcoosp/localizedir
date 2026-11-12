@@ -10,7 +10,9 @@
     "check": "astro sync && tsc --noEmit",
     "lint": "markdownlint-cli2",
     "qa": "node scripts/qa-screenshots.mjs",
-    "build": "astro build"
+    "build": "astro build",
+    "predev": "mkdir -p src/content/i18n && cp -r node_modules/@elcoosp/docs-toolkit/i18n/* src/content/i18n/ 2>/dev/null || true",
+    "prebuild": "mkdir -p src/content/i18n && cp -r node_modules/@elcoosp/docs-toolkit/i18n/* src/content/i18n/ 2>/dev/null || true"
   },
   "engines": {
     "node": ">=22.0.0"
