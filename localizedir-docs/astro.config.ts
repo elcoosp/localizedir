@@ -21,7 +21,7 @@ export default await defineDocsConfig({
                         social: [
                                 {
                                         icon: "github",
-                                        label: "GitHub",
+                                        label: "GitHub", translations: { fr: "GitHub" },
                                         href: "https://github.com/elcoosp/localizedir"
                                 },
                         ],
@@ -35,21 +35,21 @@ export default await defineDocsConfig({
                                 {
                                         label: "How-to guides", translations: { fr: 'Guides pratiques' },
                                         items: [
-                                                { label: "Organize your directories", slug: "guides/organize-your-directories" },
-                                                { label: "Control directory names", slug: "guides/control-directory-names" },
-                                                { label: "Handle unknown locales", slug: "guides/handle-unknown-locales" },
-                                                { label: "Fix compile errors", slug: "guides/fix-compile-errors" },
+                                                { label: "Organize your directories", translations: { fr: "Organiser vos répertoires" }, slug: "guides/organize-your-directories" },
+                                                { label: "Control directory names", translations: { fr: "Contrôler les noms de répertoires" }, slug: "guides/control-directory-names" },
+                                                { label: "Handle unknown locales", translations: { fr: "Gérer les locales inconnues" }, slug: "guides/handle-unknown-locales" },
+                                                { label: "Fix compile errors", translations: { fr: "Corriger les erreurs de compilation" }, slug: "guides/fix-compile-errors" },
                                         ]
                                 },
                                 {
                                         label: "Reference", translations: { fr: 'Référence' },
                                         items: [
-                                                { label: "Attribute options", slug: "reference/attribute" },
-                                                { label: "The LocalizeDir trait", slug: "reference/localize-dir-trait" },
-                                                { label: "Naming conventions", slug: "reference/naming-conventions" },
-                                                { label: "Compile error catalogue", slug: "reference/compile-error-catalogue" },
-                                                { label: "include_dir interop", slug: "reference/include-dir-interop" },
-                                                { label: "Release notes", slug: "reference/release-notes" },
+                                                { label: "Attribute options", translations: { fr: "Options d'attribut" }, slug: "reference/attribute" },
+                                                { label: "The LocalizeDir trait", translations: { fr: "Le trait LocalizeDir" }, slug: "reference/localize-dir-trait" },
+                                                { label: "Naming conventions", translations: { fr: "Conventions de nommage" }, slug: "reference/naming-conventions" },
+                                                { label: "Compile error catalogue", translations: { fr: "Catalogue des erreurs de compilation" }, slug: "reference/compile-error-catalogue" },
+                                                { label: "include_dir interop", translations: { fr: "Interopérabilité include_dir" }, slug: "reference/include-dir-interop" },
+                                                { label: "Release notes", translations: { fr: "Notes de version" }, slug: "reference/release-notes" },
                                         ]
                                 },
                                 {
