@@ -1,4 +1,6 @@
 [package]
+documentation = "https://localizedir.vercel.app"
+
 name = "localizedir"
 description = "Compile-time localized directory inclusion: generate locale-aware, embedded directory accessors for enums"
 version.workspace = true

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/logo.png" alt="localizedir Logo" width="300"/>
+  <img src="https://cdn.jsdelivr.net/gh/elcoosp/localizedir@main/docs/logo.png" alt="localizedir Logo" width="300"/>
   <p>
     <strong>Compile-Time Localized Directory Inclusion for Rust</strong><br/>
     A procedural macro that embeds your localized directories once and generates
@@ -228,8 +228,5 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 
 The changelog is generated with [git-cliff](https://git-cliff.org) from
 conventional commits; releases are automated in
-[`.github/workflows/release.yml`](.github/workflows/release.yml).
+[`.github/workflows/release.yml`](https://github.com/elcoosp/localizedir/blob/main/github/workflows/release.yml).
 
-## License
-
-MIT — see [LICENSE-MIT](LICENSE-MIT).

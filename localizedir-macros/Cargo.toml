@@ -1,4 +1,6 @@
 [package]
+documentation = "https://localizedir.vercel.app"
+
 name = "localizedir-macros"
 description = "Procedural macro behind `localizedir`: embeds per-locale directories at compile time"
 version.workspace = true
