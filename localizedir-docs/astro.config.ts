@@ -30,7 +30,7 @@ export default await defineDocsConfig({
                         sidebar: [
                                 {
                                         label: "Tutorials", translations: { fr: 'Tutoriels' },
-                                        items: [{ label: "Getting started", slug: "tutorials/getting-started" }]
+                                        items: [{ label: "Getting started", slug: "tutorials/getting-started" }], translations: { fr: "Commencer" }
                                 },
                                 {
                                         label: "How-to guides", translations: { fr: 'Guides pratiques' },
@@ -55,8 +55,8 @@ export default await defineDocsConfig({
                                 {
                                         label: "Explanation", translations: { fr: 'Explication' },
                                         items: [
-                                                { label: "How it works", slug: "explanation/how-it-works" },
-                                                { label: "Design decisions", slug: "explanation/design-decisions" },
+                                                { label: "How it works", translations: { fr: "Fonctionnement" }, slug: "explanation/how-it-works" },
+                                                { label: "Design decisions", translations: { fr: "Décisions de conception" }, slug: "explanation/design-decisions" },
                                         ]
                                 },
                         ]
