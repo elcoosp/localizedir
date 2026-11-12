@@ -2,7 +2,6 @@ import { defineDocsConfig } from '@elcoosp/docs-toolkit/config';
 import linksValidator from "starlight-links-validator";
 import imageZoom from "starlight-image-zoom";
 
-
 export default await defineDocsConfig({
   llmsTxt: {},
   changelog: { repo: 'elcoosp/localizedir' },
@@ -26,8 +25,7 @@ export default await defineDocsConfig({
                                         href: "https://github.com/elcoosp/localizedir"
                                 },
                         ],
-                        defaultLocale: "root",
-                        locales: { root: { label: "English", lang: "en" } },
+
                         plugins: [linksValidator(), imageZoom()],
                         sidebar: [
                                 {
