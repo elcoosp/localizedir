@@ -1,4 +1,5 @@
 import { defineDocsConfig } from '@elcoosp/docs-toolkit/config';
+import starlightChangelogs from 'starlight-changelogs';
 import linksValidator from "starlight-links-validator";
 import imageZoom from "starlight-image-zoom";
 
@@ -26,7 +27,7 @@ export default await defineDocsConfig({
                                 },
                         ],
 
-                        plugins: [linksValidator(), imageZoom()],
+                        plugins: [ starlightChangelogs(), linksValidator(), imageZoom()],
                         sidebar: [
                                 {
                                         label: "Tutorials", translations: { fr: 'Tutoriels' },
