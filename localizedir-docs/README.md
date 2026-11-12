@@ -18,4 +18,4 @@ pnpm lint    # markdownlint-cli2 over src/content/docs
 pnpm qa      # Playwright screenshots of every route (needs pnpm preview on :4321)
 ```
 
-Architecture, branding decisions, and QA records live in [`docs/`](docs/AGENTS.md). Content is organized by the Diátaxis framework: `tutorials/`, `guides/`, `reference/`, `explanation/`.
+Architecture, branding decisions, and QA records live in [`docs/`](https://github.com/elcoosp/localizedir/blob/main/docs/AGENTS.md). Content is organized by the Diátaxis framework: `tutorials/`, `guides/`, `reference/`, `explanation/`.
