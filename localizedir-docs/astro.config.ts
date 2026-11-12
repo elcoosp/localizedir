@@ -29,11 +29,11 @@ export default await defineDocsConfig({
                         plugins: [linksValidator(), imageZoom()],
                         sidebar: [
                                 {
-                                        label: "Tutorials",
+                                        label: "Tutorials", translations: { fr: 'Tutoriels' },
                                         items: [{ label: "Getting started", slug: "tutorials/getting-started" }]
                                 },
                                 {
-                                        label: "How-to guides",
+                                        label: "How-to guides", translations: { fr: 'Guides pratiques' },
                                         items: [
                                                 { label: "Organize your directories", slug: "guides/organize-your-directories" },
                                                 { label: "Control directory names", slug: "guides/control-directory-names" },
@@ -42,7 +42,7 @@ export default await defineDocsConfig({
                                         ]
                                 },
                                 {
-                                        label: "Reference",
+                                        label: "Reference", translations: { fr: 'Référence' },
                                         items: [
                                                 { label: "Attribute options", slug: "reference/attribute" },
                                                 { label: "The LocalizeDir trait", slug: "reference/localize-dir-trait" },
@@ -53,7 +53,7 @@ export default await defineDocsConfig({
                                         ]
                                 },
                                 {
-                                        label: "Explanation",
+                                        label: "Explanation", translations: { fr: 'Explication' },
                                         items: [
                                                 { label: "How it works", slug: "explanation/how-it-works" },
                                                 { label: "Design decisions", slug: "explanation/design-decisions" },
