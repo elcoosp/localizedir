@@ -27,11 +27,11 @@ export default await defineDocsConfig({
 
                         sidebar: [
                                 {
-                                        label: "Tutorials", translations: { fr: 'Tutoriels' },
+                                        label: "Tutorials",
                                         items: [{ label: "Getting started", slug: "tutorials/getting-started" }], translations: { fr: "Commencer" }
                                 },
                                 {
-                                        label: "How-to guides", translations: { fr: 'Guides pratiques' },
+                                        label: "How-to guides",
                                         items: [
                                                 { label: "Organize your directories", translations: { fr: "Organiser vos répertoires" }, slug: "guides/organize-your-directories" },
                                                 { label: "Control directory names", translations: { fr: "Contrôler les noms de répertoires" }, slug: "guides/control-directory-names" },
@@ -40,7 +40,7 @@ export default await defineDocsConfig({
                                         ]
                                 },
                                 {
-                                        label: "Reference", translations: { fr: 'Référence' },
+                                        label: "Reference",
                                         items: [
                                                 { label: "Attribute options", translations: { fr: "Options d'attribut" }, slug: "reference/attribute" },
                                                 { label: "The LocalizeDir trait", translations: { fr: "Le trait LocalizeDir" }, slug: "reference/localize-dir-trait" },
@@ -51,7 +51,7 @@ export default await defineDocsConfig({
                                         ]
                                 },
                                 {
-                                        label: "Explanation", translations: { fr: 'Explication' },
+                                        label: "Explanation",
                                         items: [
                                                 { label: "How it works", translations: { fr: "Fonctionnement" }, slug: "explanation/how-it-works" },
                                                 { label: "Design decisions", translations: { fr: "Décisions de conception" }, slug: "explanation/design-decisions" },
