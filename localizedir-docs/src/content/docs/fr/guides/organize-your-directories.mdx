@@ -1,0 +1,92 @@
+---
+title: Organiser vos répertoires localisés
+description: Disposez l'arbre de répertoires de base afin que localizedir découvre correctement les locales — chemins, répertoires ignorés, ancrage en espace de travail et interpolation $VAR.
+type: how-to
+---
+
+import { Aside, Code, FileTree, LinkCard } from '@astrojs/starlight/components';
+
+Ce guide vous montre comment disposer et placer votre arbre de répertoires localisés afin que la macro découvre chaque locale et échoue tôt sur les erreurs structurelles.
+
+## Comprendre la forme requise
+
+La macro attend exactement cette imbrication sous votre chemin de base :
+
+<Code lang="text" code={`<base path>/<locale>/<parent folder>/<variant directory>/`} />
+
+- **Locale** — un sous-répertoire du chemin de base, découvert par scan. Le nom est la clé de recherche exacte à l'exécution (`fr`, `pt-BR`, …).
+- **Dossier parent** — inféré depuis le nom de l'énumération (`AuthDirs` → `auth`) sauf si vous le remplacez avec `parent = "..."`.
+- **Répertoire de variante** — un par variante d'énumération, nommé via le schéma `case` ou `#[dir_name = "..."]`.
+
+Chaque paire `(locale, variant)` doit exister avant que le code ne compile. Les paires manquantes produisent une erreur de compilation qui liste chaque chemin manquant.
+
+## Placer le chemin de base
+
+Passez le chemin de base comme premier argument d'attribut. Les chemins relatifs s'ancrent au *répertoire manifeste du crate* (`CARGO_MANIFEST_DIR`), pas au répertoire de travail du compilateur :
+
+<Code lang="rust" code={`#[localizedir("tests/fixtures/localized")] // → $CARGO_MANIFEST_DIR/tests/fixtures/localized
+enum AuthDirs {
+    Welcome,
+}`} />
+
+Cet ancrage est ce qui rend la macro fiable à l'intérieur des espaces de travail cargo, où le répertoire de travail du compilateur est la racine de l'espace de travail plutôt que la racine du paquet. Les chemins absolus sont utilisés tels quels.
+
+## Tenir des répertoires hors de la découverte de locales
+
+La découverte de locales scanne les sous-répertoires immédiats du chemin de base. Le scan saute :
+
+- les répertoires dont les noms commencent par `.` (`.git`, `.staging`, …)
+- les répertoires dont les noms commencent par `_` (`_partials`, `_drafts`, …)
+- `node_modules` et `target`
+
+Tout le reste qui est un vrai sous-répertoire devient une locale, donc gardez le matériel auxiliaire à l'intérieur de l'un des noms ignorés :
+
+<FileTree>
+- locales/
+  - en/
+  - fr/
+  - _partials/      ← ignored: shared snippets live here
+  - .templates/     ← ignored: authoring material lives here
+</FileTree>
+
+<Aside type="caution">
+Les fichiers directement sous le chemin de base sont ignorés pendant la découverte, mais le répertoire de base entier est toujours embarqué. Ne placez pas de secrets ou de fichiers de travail volumineux ici.
+</Aside>
+
+## Interpoler les variables d'environnement
+
+Les chemins de base supportent l'interpolation `$VAR` avec les mêmes règles qu'`include_dir!` : un `$` suivi de lettres ASCII, de chiffres ou de soulignés nomme une variable, qui est recherchée une fois sans expansion récursive.
+
+<Code lang="rust" code={`#[localizedir("$CARGO_MANIFEST_DIR/locales")]
+enum AuthDirs {
+    Welcome,
+}
+
+#[localizedir("$TEMPLATE_ROOT/auth")]
+enum MailDirs {
+    Welcome,
+}`} />
+
+Une variable non définie fait échouer la compilation avec un message nommant la variable et l'attribut qui l'a utilisée, donc une machine CI mal configurée fait surface immédiatement au lieu d'embarquer le mauvais arbre.
+
+## Partager un arbre à travers un ensemble d'énumérations
+
+Plusieurs énumérations peuvent pointer vers le même chemin de base avec différents dossiers `parent` :
+
+<Code lang="rust" code={`#[localizedir("locales", parent = "auth")]
+enum AuthDirs {
+    Welcome,
+    ForgotPassword,
+}
+
+#[localizedir("locales", parent = "email")]
+enum MailDirs {
+    Newsletter,
+}`} />
+
+Les deux énumérations embarquent le même arbre une fois et le naviguent indépendamment.
+
+## Étapes suivantes
+
+<LinkCard title="Contrôler les noms de répertoires" href="/guides/control-directory-names/" />
+<LinkCard title="Options d'attribut" href="/reference/attribute/" />

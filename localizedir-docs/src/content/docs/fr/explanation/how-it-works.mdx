@@ -1,0 +1,86 @@
+---
+title: Comment fonctionne localizedir
+description: "L'anatomie d'une expansion #[localizedir] — ancrage de chemin, découverte de locales à la compilation, validation et code généré."
+type: explanation
+---
+
+import { Code, LinkCard, Steps } from '@astrojs/starlight/components';
+
+Cette page explique ce qui se passe entre l'attribut que vous écrivez et le code que le compilateur voit. Comprendre le pipeline vous aide à prévoir les erreurs de compilation, à raisonner sur la taille du binaire, et à utiliser l'API générée sans surprises.
+
+## Le pipeline
+
+Quand le compilateur rencontre `#[localizedir("locales", ...)]`, la macro s'exécute en quatre étapes avant d'émettre du code :
+
+<Steps>
+
+1. **Analyser.** Un parseur `syn` lit l'attribut : un littéral de chaîne positionnel pour le chemin de base plus les options `fallback`, `parent` et `case` optionnelles. Les clés inconnues, les clés en double et les valeurs non littérales échouent ici, au token exact.
+2. **Valider l'entrée.** L'élément décoré doit être une énumération non générique avec au moins une variante unitaire. Les variantes avec champs, les génériques et les énumérations vides sont rejetés avant que le système de fichiers ne soit touché.
+3. **Résoudre les noms.** Le dossier parent vient de `parent = "..."` ou est inféré depuis le nom de l'énumération (suppression du suffixe + snake_case) ; chaque variante devient un nom de répertoire via le schéma `case` ou son override `#[dir_name]`. Les noms de répertoires en double échouent ici.
+4. **Ancrer et valider le chemin.** Les `$VAR` sont étendues comme `include_dir!` les étend, les chemins relatifs s'ancrent à `$CARGO_MANIFEST_DIR`, et la macro scanne le répertoire de base : les noms de locales sont collectés (triés, dédupliqués), et chaque répertoire `(locale, variant)` doit exister. Tout ce qui manque fait échouer la compilation avec la liste complète.
+
+</Steps>
+
+Ce n'est qu'après le succès des quatre étapes que la génération de code commence — donc une énumération générée décrit toujours un arbre qui existe.
+
+## Le code généré
+
+L'expansion contient trois pièces :
+
+<Code lang="rust" code={`// 1. Your enum, re-emitted without the #[dir_name] helper attributes.
+//    Doc comments and other attributes are preserved.
+
+// 2. A hidden inherent block: the single embed plus a path helper.
+#[doc(hidden)]
+impl AuthDirs {
+    const LOCALIZEDIR_BASE: ::include_dir::Dir<'static> =
+                    ::include_dir::include_dir!("$CARGO_MANIFEST_DIR/tests/fixtures/localized");
+
+    fn localizedir_path(&self, locale: &str) -> ::std::path::PathBuf {
+                    ::std::path::Path::new(locale)
+                                    .join(Self::parent_folder())
+                                    .join(self.dir_name())
+    }
+}
+
+// 3. The LocalizeDir impl: metadata from literals, lookups via get_dir.
+impl ::localizedir::LocalizeDir for AuthDirs {
+    fn available_locales() -> &'static [&'static str] {
+                    &["de", "en", "fr"] // discovered at compile time, sorted
+    }
+    fn try_to_localized_dir(&self, locale: &str) -> Option<&'static ::include_dir::Dir<'static>> {
+                    Self::LOCALIZEDIR_BASE.get_dir(self.localizedir_path(locale))
+    }
+    // … base_path, parent_folder, dir_name, full_path, and the
+    //   fallback override only when fallback = "..." is configured.
+}`} />
+
+Parce que le code généré est du Rust simple et documenté, rust-analyzer le navigue comme du code écrit à la main — aller à la définition atterrit sur de vraies méthodes, pas sur les internes de la macro.
+
+## Pourquoi un seul embed compte
+
+Une implémentation alternative évidente embarque chaque répertoire `(variant, locale)` séparément. Cette approche étend `include_dir!` une fois par paire : avec 12 variantes et 6 locales, le même arbre est re-parcouru, re-sérialisé et re-vérifié 72 fois. `localizedir` embarque le répertoire de base entier **exactement une fois** et traite chaque recherche comme une comparaison de chemin à l'intérieur de cet arbre statique unique.
+
+Les conséquences :
+
+- **Le temps de compilation reste plat** à mesure que l'arbre de modèles grandit, et ne s'échelonne pas avec `variantes × locales`.
+- **Le fallback à l'exécution est gratuit** — avec un `fallback` configuré, une locale manquante est résolue par une seconde `get_dir` sur le même arbre, pas par des chemins de code générés.
+- **La taille du binaire est payée une fois** pour l'arbre, peu importe combien d'énumérations y font référence. Deux énumérations pointant vers le même chemin de base détiennent chacune une constante pointant dans les mêmes données embarquées.
+
+## Pourquoi la découverte de locales est à la compilation
+
+Scanner le répertoire de base à la compilation achète deux propriétés que le scan à l'exécution ne peut pas offrir :
+
+1. **Les fautes de frappe structurelles font échouer le build.** Un répertoire de variante supprimé ou renommé est une erreur de compilation listant les chemins exacts manquants — pas une surprise de type 404 à l'exécution en production.
+2. **Les métadonnées sont gratuites pour toujours.** `available_locales()`, `has_locale()` et les recherches lisent des littéraux générés et un arbre statique ; il n'y a pas d'accès au système de fichiers, pas de verrouillage, et pas d'allocation sur le chemin chaud de recherche au-delà d'une jointure `PathBuf`.
+
+Le compromis est intentionnel : l'ensemble des locales est fixé à la compilation. Ajouter une locale signifie ajouter un répertoire et recompiler — le même contrat qu'`include_dir` lui-même fait sur les fichiers.
+
+## Pourquoi les recherches sont à correspondance exacte
+
+La clé de recherche est le nom du répertoire, comparé exactement. Il n'y a pas de case folding (`"FR"` ne correspond pas à `"fr"`), pas de normalisation de séparateur (`"en-US"` ne correspond pas à `"en"`), et pas de correspondance par préfixe BCP-47. La normalisation coûterait une allocation par recherche et devinerait silencieusement ce que vous vouliez dire, cachant les fautes de frappe. Le [guide des locales inconnues](/guides/handle-unknown-locales/) montre la couche de négociation à ajouter devant quand vous en avez besoin.
+
+## Étapes suivantes
+
+<LinkCard title="Décisions de conception" href="/explanation/design-decisions/" />
+<LinkCard title="Interopérabilité include_dir" href="/reference/include-dir-interop/" />

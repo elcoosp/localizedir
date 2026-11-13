@@ -1,0 +1,66 @@
+---
+title: Options d'attribut
+description: 'Syntaxe et sémantique complètes de l'attribut #[localizedir(...)] — le chemin de base positionnel, fallback, parent, case, et l'attribut helper #[dir_name].'
+type: reference
+---
+
+import { Code, LinkCard } from '@astrojs/starlight/components';
+
+L'attribut macro `#[localizedir(...)]` accepte un chemin de base positionnel suivi d'options `key = "value"` séparées par des virgules, optionnelles. Les options peuvent apparaître dans n'importe quel ordre, et une virgule finale est tolérée.
+
+<Code lang="rust" code={`#[localizedir("templates/localized", fallback = "en", parent = "auth", case = "kebab")]
+enum AuthDirs {
+    Welcome,
+    ForgotPassword,
+}`} />
+
+## Options
+
+| Option | Type | Défaut | Signification |
+| :--- | :--- | :--- | :--- |
+| `"<base path>"` | littéral de chaîne positionnel | — (requis) | Répertoire qui contient un sous-répertoire par locale. Les chemins relatifs s'ancrent à `$CARGO_MANIFEST_DIR` ; l'interpolation `$VAR` suit la sémantique d'`include_dir!`. |
+| `fallback = "<locale>"` | littéral de chaîne | aucun | Locale servie par `to_localized_dir` quand la locale demandée n'a pas de répertoire embarqué. Doit être une locale découverte. `try_to_localized_dir` n'est pas affecté. |
+| `parent = "<folder>"` | littéral de chaîne | inféré depuis le nom de l'énumération | Remplace le dossier parent entre le répertoire de locale et les répertoires de variantes. Une chaîne vide est rejetée. |
+| `case = "<scheme>"` | `"snake"` \| `"kebab"` \| `"flat"` | `"snake"` | Schéma de nommage qui convertit les noms de variantes en noms de répertoires. Les noms inconnus sont rejetés à la compilation. |
+
+## Le chemin de base
+
+Le chemin de base est conservé exactement tel qu'écrit et retourné textuellement par `LocalizeDir::base_path()`. Pour les entrées relatives, l'appel `include_dir!` généré reçoit `$CARGO_MANIFEST_DIR/<path>` afin que l'embed ne dépende jamais du répertoire de travail du compilateur. Les entrées absolues passent inchangées.
+
+| Entrée | Argument `include_dir!` | Chemin de validation |
+| :--- | :--- | :--- |
+| `"locales"` | `$CARGO_MANIFEST_DIR/locales` | `<manifest>/locales` |
+| `"/srv/locales"` | `/srv/locales` | `/srv/locales` |
+| `"$DATA/locales"` | `$DATA/locales` | `$DATA/locales` expansé |
+
+## L'attribut helper #[dir_name]
+
+Les variantes individuelles acceptent un attribut `#[dir_name = "..."]` qui remplace le nom produit par `case` :
+
+<Code lang="rust" code={`#[localizedir("assets/localized")]
+enum MailTemplates {
+    #[dir_name = "welcome_v2"]
+    Welcome,
+    PasswordReset,
+}`} />
+
+Règles :
+
+- La valeur doit être un littéral de chaîne ; les expressions telles que `#[dir_name = 1 + 2]` sont rejetées.
+- L'attribut doit utiliser la forme `NameValue` ; un `#[dir_name]` nu est rejeté.
+- Une variante porte au plus un `#[dir_name]` ; les doublons sont rejetés.
+- Une chaîne vide est rejetée.
+- L'attribut helper est consommé par la macro et n'apparaît pas sur l'énumération ré-émise ; les commentaires de doc et les autres attributs sont préservés.
+
+## Ce vers quoi l'attribut s'étend
+
+Pour une entrée valide, la macro émet l'énumération (moins les attributs `#[dir_name]`), un bloc inhérent `#[doc(hidden)]` avec le répertoire `LOCALIZEDIR_BASE` embarqué, et l'implémentation `LocalizeDir`. Voir [Comment ça marche](/explanation/how-it-works/) pour l'anatomie complète.
+
+## Validation de l'entrée
+
+L'attribut ne s'applique qu'aux énumérations avec variantes unitaires. Les cibles non-énumérations, les énumérations génériques, les énumérations vides et les variantes avec champs sont tous rejetés — voir le [catalogue des erreurs de compilation](/reference/compile-error-catalogue/) pour chaque diagnostic.
+
+## Étapes suivantes
+
+<LinkCard title="Le trait LocalizeDir" href="/reference/localize-dir-trait/" />
+<LinkCard title="Conventions de nommage" href="/reference/naming-conventions/" />

@@ -1,0 +1,59 @@
+---
+title: Corriger les erreurs de compilation
+description: Lisez les diagnostics à la compilation de localizedir et corrigez les causes — répertoires manquants, doublons, attributs mal formés et valeurs de casse invalides.
+type: how-to
+---
+
+import { Aside, Code, LinkCard } from '@astrojs/starlight/components';
+
+Ce guide vous montre comment lire un diagnostic `localizedir` et corriger sa cause. Chaque vérification s'exécute à la compilation et pointe vers le token fautif, donc le correctif est généralement à un répertoire ou un attribut de distance.
+
+## Lire d'abord le diagnostic
+
+Les erreurs `localizedir` portent toujours trois informations : ce qui est faux, où siège le token fautif, et (pour les problèmes de système de fichiers) les chemins exacts impliqués :
+
+<Code lang="text" code={`error: missing directories for some (locale, variant) pairs:
+  - /path/to/crate/locales/fr/auth/forgot_password
+ --> src/lib.rs:3:15
+  |
+3 | #[localizedir("locales")]
+  |               ^^^^^^^^^`} />
+
+Le span (ici `^^^^^^^^^`) marque le token à regarder — le chemin de base pour les problèmes de système de fichiers, la variante pour les problèmes par variante, la clé d'option pour les problèmes d'option.
+
+## Corriger les erreurs les plus courantes
+
+### Répertoires (locale, variant) manquants
+
+Le message liste chaque paire manquante. Créez les répertoires listés — dans cet exemple, `locales/fr/auth/forgot_password/` — ou supprimez la variante d'énumération correspondante si le modèle n'existe plus.
+
+### Le chemin de base n'existe pas
+
+Le message se lit `base path does not exist: <path>` et vous rappelle que les chemins relatifs se résolvent contre le répertoire manifeste du crate. Vérifiez une faute de frappe dans le chemin, et rappelez-vous que `cargo` ancre les chemins relatifs à `CARGO_MANIFEST_DIR`, pas au fichier où la macro apparaît.
+
+### Noms de répertoires en double
+
+Deux variantes résolvent au même nom de répertoire, ce qu'un répertoire embarqué ne peut pas servir. Le message se lit `variants map to duplicate directory names: welcome`. Renommez une variante, ajustez un override `#[dir_name = "..."]`, ou changez le schéma `case`.
+
+### Option d'attribut inconnue ou en double
+
+Les fautes de frappe produisent ``unknown option `fallbackx`; expected one of `fallback`, `parent`, `case` ``, et répéter une option produit ``duplicate option `fallback` ``. Utilisez chaque option au plus une fois et vérifiez l'orthographe contre la [référence des attributs](/reference/attribute/).
+
+### Valeur de casse inconnue
+
+`case = "camel"` produit ``unknown case `camel`; expected one of snake, kebab, flat``. Seuls les trois noms de schéma sont valides, en minuscules.
+
+## Consultez ensuite le catalogue complet
+
+Le catalogue liste chaque diagnostic que la macro peut émettre, avec la cause et le correctif pour chacun :
+
+<LinkCard title="Catalogue des erreurs de compilation" href="/reference/compile-error-catalogue/" />
+
+<Aside type="tip">
+La propre suite de tests du crate capture ces diagnostics comme tests UI [trybuild](https://docs.rs/trybuild), donc le libellé que vous voyez dans le catalogue est stable à travers les versions patch.
+</Aside>
+
+## Étapes suivantes
+
+<LinkCard title="Options d'attribut" href="/reference/attribute/" />
+<LinkCard title="Organiser vos répertoires" href="/guides/organize-your-directories/" />

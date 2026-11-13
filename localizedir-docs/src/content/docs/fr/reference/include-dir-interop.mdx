@@ -1,0 +1,75 @@
+---
+title: Interopérabilité include_dir
+description: Comment le code généré se rapporte à include_dir — l'embed LOCALIZEDIR_BASE, la sémantique de chemin relative à la racine, et la lecture de fichiers depuis les répertoires retournés.
+type: reference
+---
+
+import { Aside, Code, LinkCard } from '@astrojs/starlight/components';
+
+`localizedir` se construit sur [include_dir](https://crates.io/crates/include_dir) et expose ses vrais types. Cette page documente l'interaction exacte afin que vous puissiez utiliser l'API complète `include_dir` sur les répertoires retournés.
+
+## Vous avez besoin des deux crates
+
+La macro s'étend en `include_dir::include_dir!(...)`, qui se résout dans *votre* crate — pas à l'intérieur du crate `localizedir`. Votre `Cargo.toml` liste donc les deux :
+
+<Code lang="toml" code={`[dependencies]
+localizedir = "0.2"
+include_dir = "0.7"`} />
+
+## L'embed unique
+
+Le code généré contient une constante `#[doc(hidden)]` sur votre énumération :
+
+<Code lang="rust" code={`#[doc(hidden)]
+impl AuthDirs {
+    /// The whole base directory, embedded exactly once.
+    const LOCALIZEDIR_BASE: ::include_dir::Dir<'static> =
+                    ::include_dir::include_dir!("$CARGO_MANIFEST_DIR/tests/fixtures/localized");
+}`} />
+
+Chaque recherche navigue cet arbre statique unique avec `Dir::get_dir`, donc le coût d'embed est payé une fois par énumération indépendamment du nombre de variantes et de locales. L'`include_arg` utilise la convention `$CARGO_MANIFEST_DIR/` pour les entrées relatives afin que la racine embarquée ne dépende jamais du répertoire de travail du compilateur.
+
+## Sémantique de chemin relative à la racine
+
+Dans `include_dir`, les chemins sont relatifs à la **racine embarquée**, et le même espace de chemin est partagé par le répertoire racine et chaque sous-répertoire. Deux conséquences comptent en pratique :
+
+- `Dir::path()` d'un répertoire retourné est égal à `full_path(locale)` — par exemple `fr/auth/welcome`.
+- `get_file` accepte des chemins relatifs à la racine même quand vous l'appelez sur un sous-répertoire.
+
+<Code lang="rust" code={`let dir = AuthDirs::Welcome.try_to_localized_dir("fr").expect("fr exists");
+assert_eq!(dir.path(), std::path::Path::new("fr/auth/welcome"));
+
+// Both forms find the same file:
+assert!(dir.get_file("fr/auth/welcome/note.txt").is_some());
+assert!(dir.get_file(AuthDirs::Welcome.full_path("fr").join("note.txt")).is_some());`} />
+
+La seconde forme se compose proprement quand vous détenez déjà la variante et la locale :
+
+<Code lang="rust" code={`fn read_note(template: AuthDirs, locale: &str) -> Option<String> {
+    let dir = template.try_to_localized_dir(locale)?;
+    let file = dir.get_file(template.full_path(locale).join("note.txt"))?;
+    Some(String::from_utf8_lossy(file.contents()).into_owned())
+}`} />
+
+## La boîte à outils complète include_dir
+
+Le `&'static Dir<'static>` retourné est un `include_dir::Dir` simple, donc tout dans son API fonctionne sur votre sous-arbre localisé :
+
+| API | Utilisation |
+| :--- | :--- |
+| `dir.get_file(path)` | Récupérer un fichier embarqué par chemin relatif à la racine. |
+| `dir.files()` | Itérer chaque fichier sous le répertoire, récursivement. |
+| `dir.dirs()` | Itérer les sous-répertoires. |
+| `dir.find(pattern)` | Recherche de style glob. Nécessite la fonctionnalité `glob` d'`include_dir`. |
+| `dir.extract(base_path)` | Réécrire le sous-arbre sur le système de fichiers réel. |
+| `file.contents()` | Les octets du fichier, `&'static [u8]`. |
+| `file.contents_utf8()` | Les octets du fichier comme `&'static str`, quand valides en UTF-8. |
+
+<Aside type="note">
+Parce que les contenus sont des tranches `'static` dans le binaire, vous pouvez les passer à des parseurs, des caches, ou des API attendant `&'static str` sans copier.
+</Aside>
+
+## Étapes suivantes
+
+<LinkCard title="Comment ça marche" href="/explanation/how-it-works/" />
+<LinkCard title="Le trait LocalizeDir" href="/reference/localize-dir-trait/" />

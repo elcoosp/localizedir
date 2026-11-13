@@ -1,0 +1,65 @@
+---
+title: Conventions de nommage
+description: Comment les noms d'énumérations et de variantes deviennent des noms de répertoires — la table des suffixes supprimés, les schémas de casse, la gestion des acronymes et les identifiants bruts.
+type: reference
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+
+La macro dérive les noms de répertoires de vos identifiants Rust via deux règles indépendantes : inférence du dossier parent depuis le nom de l'énumération, et noms de répertoires par variante depuis le schéma `case`. Les deux passent par le crate [convert_case](https://crates.io/crates/convert_case), qui gère correctement les noms portant des acronymes.
+
+## Inférence du dossier parent
+
+Le dossier parent est inféré depuis le nom de l'énumération en supprimant le suffixe le plus long correspondant dans cette table et en convertissant le reste en `snake_case` :
+
+| Nom d'énumération | Parent inféré |
+| :--- | :--- |
+| `AuthDirs` | `auth` |
+| `EmailTemplates` | `email` |
+| `LegalDocs` | `legal` |
+| `InvoiceDocuments` | `invoice` |
+| `UserDirectories` | `user` |
+| `UserProfileDirs` | `user_profile` |
+| `BrandAssets` | `brand` |
+| `StaticFiles` | `static` |
+| `AppLocales` | `app` |
+| `APIResponseDirs` | `api_response` |
+| `MJMLTemplates` | `mjml` |
+
+Les suffixes supprimés, du plus long au plus court :
+
+`Directories`, `Templates`, `Documents`, `Locales`, `Template`, `Document`, `Locale`, `Dirs`, `Docs`, `Dir`, `Assets`, `Files`, `Asset`, `File`
+
+Quand la suppression ne laisserait rien — une énumération littéralement nommée `Dirs`, `Templates` ou `Weird` — le nom complet est utilisé à la place (`dirs`, `templates`, `weird`). Un résultat vide ne peut pas se produire, et `parent = "..."` remplace entièrement l'inférence.
+
+## Noms de répertoires par variante
+
+Chaque nom de variante passe par le schéma sélectionné par `case` :
+
+| Variante | `snake` (défaut) | `kebab` | `flat` |
+| :--- | :--- | :--- | :--- |
+| `Welcome` | `welcome` | `welcome` | `welcome` |
+| `ForgotPassword` | `forgot_password` | `forgot-password` | `forgotpassword` |
+| `TermsOfService` | `terms_of_service` | `terms-of-service` | `termsofservice` |
+| `HtmlReport` | `html_report` | `html-report` | `htmlreport` |
+| `APIKey` | `api_key` | `api-key` | `apikey` |
+
+Seuls les trois noms de schéma ci-dessus sont acceptés, en minuscules ; tout le reste fait échouer la compilation avec ``unknown case `camel`; expected one of snake, kebab, flat``.
+
+## Overrides
+
+Deux mécanismes battent les défauts, dans cet ordre de préséance :
+
+1. `#[dir_name = "..."]` sur une variante — l'emporte sur le schéma `case` pour cette variante.
+2. `parent = "..."` sur l'attribut — l'emporte sur l'inférence du nom d'énumération pour le dossier parent.
+
+## Cas limites gérés par la macro
+
+- **Acronymes** — `convert_case` traite les majuscules consécutives comme un seul mot, donc `APIResponseDirs` devient `api_response`, pas `a_p_i_response`.
+- **Identifiants bruts** — une variante écrite `r#Type` se convertit en `type`, sans le préfixe `r#`.
+- **Résultats en double** — deux variantes résolvant au même nom de répertoire font échouer la compilation avec un message nommant le répertoire en collision.
+
+## Étapes suivantes
+
+<LinkCard title="Contrôler les noms de répertoires" href="/guides/control-directory-names/" />
+<LinkCard title="Options d'attribut" href="/reference/attribute/" />

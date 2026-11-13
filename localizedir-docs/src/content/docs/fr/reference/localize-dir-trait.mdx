@@ -1,0 +1,108 @@
+---
+title: Le trait LocalizeDir
+description: Chaque méthode du trait LocalizeDir — signature, type de retour, paniques, défauts et exemples.
+type: reference
+---
+
+import { Code, LinkCard } from '@astrojs/starlight/components';
+
+Chaque énumération annotée avec `#[localizedir(...)]` implémente le trait `LocalizeDir`. Importez-le aux côtés de la macro :
+
+<Code lang="rust" code={`use localizedir::{LocalizeDir, localizedir};`} />
+
+Toutes les méthodes du trait sont `const`-cheap : les métadonnées viennent de littéraux de chaîne générés et de tranches, et les recherches naviguent l'arbre de répertoires embarqué sans toucher au système de fichiers.
+
+## Recherches
+
+### try_to_localized_dir
+
+<Code lang="rust" code={`fn try_to_localized_dir(&self, locale: &str) -> Option<&'static Dir<'static>>;`} />
+
+Retourne le répertoire embarqué pour `locale`, ou `None` quand la locale est inconnue. C'est la primitive non-paniquante ; la correspondance est exacte contre les noms de locales découverts à la compilation.
+
+<Code lang="rust" code={`let dir = AuthDirs::Welcome.try_to_localized_dir("fr").expect("fr exists");
+assert!(dir.get_file("fr/auth/welcome/note.txt").is_some());`} />
+
+La référence retournée est `'static` et pointe dans le binaire — elle vit pour le reste du processus avec aucun coût d'exécution par accès.
+
+### to_localized_dir
+
+<Code lang="rust" code={`fn to_localized_dir(&self, locale: &str) -> &'static Dir<'static>;`} />
+
+Wrapper paniquant de commodité autour de `try_to_localized_dir`.
+
+- **Sans `fallback`** : panique quand `locale` n'a pas de répertoire embarqué, avec un message comme ``localizedir: no embedded directory for locale `xx` (variant `welcome`)``.
+- **Avec `fallback = "en"`** : sert le répertoire de la locale de fallback quand la locale demandée est manquante ; ne panique que quand les deux sont manquants, nommant la variante, les deux locales et le chemin de base.
+
+### full_path
+
+<Code lang="rust" code={`fn full_path(&self, locale: &str) -> std::path::PathBuf;`} />
+
+Compose le chemin embarqué du répertoire de cette variante sous `locale`, relatif à la racine embarquée — par exemple `fr/auth/welcome`. L'appel est une pure composition : il ne requiert pas que la locale existe, et pour les locales découvertes, il est toujours égal à [`Dir::path()`](https://docs.rs/include_dir/latest/include_dir/struct.Dir.html#method.path) du répertoire retourné par les recherches.
+
+## Métadonnées
+
+### available_locales
+
+<Code lang="rust" code={`fn available_locales() -> &'static [&'static str]
+where
+    Self: Sized;`} />
+
+Les locales découvertes à la compilation sous le chemin de base, triées et dédupliquées. La découverte scanne les sous-répertoires immédiats du chemin de base et saute les noms commençant par `.` ou `_` plus `node_modules` et `target`.
+
+### has_locale
+
+<Code lang="rust" code={`fn has_locale(locale: &str) -> bool
+where
+    Self: Sized;`} />
+
+`true` quand `locale` a été découverte à la compilation. Correspondance exacte — `"FR"` n'est pas `"fr"`. L'implémentation par défaut vérifie l'appartenance dans `available_locales()`.
+
+### fallback_locale
+
+<Code lang="rust" code={`fn fallback_locale() -> Option<&'static str>
+where
+    Self: Sized;`} />
+
+La locale configurée via `fallback = "..."`, ou `None` par défaut. L'override généré n'existe que quand l'attribut configure un fallback.
+
+### base_path
+
+<Code lang="rust" code={`fn base_path() -> &'static str
+where
+    Self: Sized;`} />
+
+Le chemin de base exactement tel qu'écrit dans l'attribut, avant l'interpolation `$VAR`. Utile pour les diagnostics et pour composer des chemins de fichiers dans les journaux.
+
+### parent_folder
+
+<Code lang="rust" code={`fn parent_folder() -> &'static str
+where
+    Self: Sized;`} />
+
+Le dossier parent entre le répertoire de locale et les répertoires de variantes — inféré depuis le nom de l'énumération sauf si remplacé avec `parent = "..."`.
+
+### dir_name
+
+<Code lang="rust" code={`fn dir_name(&self) -> &'static str;`} />
+
+Le nom de répertoire de cette variante dans le schéma `case` configuré, ou l'override `#[dir_name = "..."]`.
+
+## Résumé des méthodes
+
+| Méthode | Panique ? | Retourne | Notes |
+| :--- | :--- | :--- | :--- |
+| `try_to_localized_dir(&self, locale)` | non | `Option<&'static Dir<'static>>` | Recherche centrale ; correspondance exacte de locale |
+| `to_localized_dir(&self, locale)` | oui | `&'static Dir<'static>` | Honore `fallback` quand configuré |
+| `available_locales()` | non | `&'static [&'static str]` | Triées à la compilation |
+| `has_locale(locale)` | non | `bool` | Correspondance exacte |
+| `fallback_locale()` | non | `Option<&'static str>` | `None` sauf si `fallback` est défini |
+| `base_path()` | non | `&'static str` | Tel qu'écrit dans l'attribut |
+| `parent_folder()` | non | `&'static str` | Inféré ou remplacé |
+| `dir_name(&self)` | non | `&'static str` | Par variante |
+| `full_path(&self, locale)` | non | `std::path::PathBuf` | Relatif à la racine ; aucune vérification d'existence |
+
+## Étapes suivantes
+
+<LinkCard title="Interopérabilité include_dir" href="/reference/include-dir-interop/" />
+<LinkCard title="Gérer les locales inconnues" href="/guides/handle-unknown-locales/" />

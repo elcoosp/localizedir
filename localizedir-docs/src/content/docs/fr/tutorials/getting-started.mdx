@@ -1,0 +1,120 @@
+---
+title: Démarrer avec localizedir
+description: Construisez une énumération localisée fonctionnelle depuis un crate vide en cinq étapes — préparer l'arbre, ajouter les dépendances, annoter, rechercher, vérifier.
+type: tutorial
+---
+
+import { Aside, Code, FileTree, LinkCard, TabItem, Tabs } from '@astrojs/starlight/components';
+
+Ce tutoriel vous guide à travers votre première énumération `localizedir`, d'un crate vide aux recherches de répertoires conscientes de la locale qui compilent et s'exécutent. Vous embarquez un petit arbre de modèles localisés pour une fonctionnalité d'authentification et lisez les fichiers en retour en trois langues.
+
+## Prérequis
+
+- Rust **1.88** ou plus récent (`rustc --version` pour vérifier)
+- Un terminal avec `cargo` sur votre `PATH`
+
+## 1. Créer un crate
+
+Partez d'un crate binaire frais :
+
+<Code lang="bash" code={`cargo new demo && cd demo`} />
+
+## 2. Préparer l'arbre de répertoires localisés
+
+`localizedir` attend un répertoire de base qui contient un sous-répertoire par locale. À l'intérieur de chaque locale siège le dossier parent (dans ce tutoriel, `auth`) et un répertoire par variante d'énumération. Créez cet arbre à côté de votre `Cargo.toml` :
+
+<FileTree>
+- tests/fixtures/localized/
+  - **de/**
+    - auth/
+      - welcome/
+        - note.txt
+      - forgot_password/
+        - note.txt
+  - **en/**
+    - auth/
+      - welcome/
+        - note.txt
+      - forgot_password/
+        - note.txt
+  - **fr/**
+    - auth/
+      - welcome/
+        - note.txt
+      - forgot_password/
+        - note.txt
+</FileTree>
+
+Mettez du contenu distinguable dans chaque fichier — par exemple `en:auth:welcome` dans `en/auth/welcome/note.txt`. Le premier segment de chemin sous le chemin de base (`de`, `en`, `fr`) devient une locale ; la macro les découvre en scannant le système de fichiers à la compilation.
+
+## 3. Ajouter les dépendances
+
+<Tabs>
+  <TabItem label="cargo add">
+<Code lang="bash" code={` cargo add localizedir@0.2 include_dir@0.7`} />
+  </TabItem>
+  <TabItem label="Cargo.toml">
+<Code lang="toml" code={`  [dependencies]
+  localizedir = "0.2"
+  include_dir = "0.7"`} />
+  </TabItem>
+</Tabs>
+
+<Aside type="caution">
+Vous avez besoin des deux crates. La macro s'étend en `include_dir::include_dir!(...)`, qui se résout dans *votre* crate, donc `include_dir` doit être une dépendance directe.
+</Aside>
+
+## 4. Annoter une énumération
+
+Remplacez `src/main.rs` par :
+
+<Code lang="rust" code={`use localizedir::{LocalizeDir, localizedir};
+
+#[localizedir("tests/fixtures/localized")]
+enum AuthDirs {
+    Welcome,
+    ForgotPassword,
+}
+
+fn main() {
+    // Look up the embedded directory for one locale and variant.
+    let dir = AuthDirs::Welcome.to_localized_dir("fr");
+    let note = dir
+                    .get_file(AuthDirs::Welcome.full_path("fr").join("note.txt"))
+                    .expect("note.txt is embedded");
+    println!("fr welcome note: {}", String::from_utf8_lossy(note.contents()));
+
+    // Compile-time metadata: no runtime scanning anywhere.
+    println!("locales: {:?}", AuthDirs::available_locales());
+    println!("parent folder: {}", AuthDirs::parent_folder());
+    println!("welcome dir name: {}", AuthDirs::Welcome.dir_name());
+}`} />
+
+L'attribut consomme l'énumération, la ré-émet et génère l'implémentation `LocalizeDir`. `AuthDirs` continue de fonctionner comme une énumération simple à tous autres égards.
+
+## 5. Exécuter et vérifier
+
+<Code lang="bash" code={`cargo run`} />
+
+Vous devriez voir une sortie comme celle-ci (l'ordre des locales vient du scan du système de fichiers et est toujours trié) :
+
+<Code lang="ansi" code={`   Compiling demo v0.1.0 (/path/to/demo)
+    Running \`target/debug/demo\`
+fr welcome note: fr:auth:welcome
+locales: ["de", "en", "fr"]
+parent folder: auth
+welcome dir name: welcome`} />
+
+Cassez quelque chose exprès pour voir la garantie à la compilation : supprimez `fr/auth/forgot_password/` et relancez `cargo run`. Le build échoue maintenant avec un message listant chaque répertoire `(locale, variant)` manquant et pointant vers l'attribut. Restaurez le répertoire quand vous avez terminé.
+
+## Ce que vous avez appris
+
+- Le chemin de base dans l'attribut est résolu relativement au répertoire manifeste de votre crate.
+- Les sous-répertoires de locales sont découverts à la compilation et exposés via `available_locales()`, `has_locale()` et les recherches.
+- Les recherches embarquées retournent le vrai `Dir` d'[include_dir](https://docs.rs/include_dir), donc `get_file`, `files()` et compagnie fonctionnent tous.
+
+## Étapes suivantes
+
+<LinkCard title="Organiser vos répertoires" href="/guides/organize-your-directories/" />
+<LinkCard title="Contrôler les noms de répertoires" href="/guides/control-directory-names/" />
+<LinkCard title="Le trait LocalizeDir" href="/reference/localize-dir-trait/" />

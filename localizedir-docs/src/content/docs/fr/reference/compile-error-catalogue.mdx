@@ -1,0 +1,73 @@
+---
+title: Catalogue des erreurs de compilation
+description: Chaque diagnostic à la compilation que localizedir émet, avec le message exact, la cause et le correctif.
+type: reference
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+
+`localizedir` valide tout à la compilation et pointe chaque erreur vers le token fautif. Ce catalogue liste chaque diagnostic avec sa cause et son correctif. Le libellé est testé par snapshot, donc il est stable à travers les versions patch.
+
+## Diagnostics de système de fichiers
+
+Ces erreurs pointent vers le littéral de chaîne du chemin de base dans l'attribut.
+
+| Message | Cause | Correctif |
+| :--- | :--- | :--- |
+| `base path does not exist: <path> (paths are resolved relative to the crate manifest directory)` | Le chemin de base n'existe pas sur le disque. | Créez le répertoire, ou corrigez le chemin. Rappelez-vous que les chemins relatifs s'ancrent à `CARGO_MANIFEST_DIR`. |
+| `base path is not a directory: <path>` | Le chemin de base existe mais est un fichier. | Passez le répertoire qui contient les sous-répertoires de locales. |
+| ``no locale directories found in `<path>`; expected at least one subdirectory (e.g. `en/`)`` | Le chemin de base existe mais ne contient aucun sous-répertoire de locale éligible. | Ajoutez au moins un répertoire de locale tel que `en/`. Les noms commençant par `.` ou `_`, plus `node_modules` et `target`, sont sautés. |
+| `cannot read base path <path>: <io error>` | Le répertoire ne peut pas être lu. | Vérifiez les permissions sur le répertoire de base. |
+| `missing directories for some (locale, variant) pairs:` suivi d'une liste de chemins | Au moins un répertoire `(locale, variant)` est absent. | Créez chaque répertoire listé, ou supprimez les variantes d'énumération correspondantes. |
+| ``environment variable `$VAR` (used in `<path>`) is not set`` | Le chemin de base utilise l'interpolation `$VAR` et la variable n'est pas définie. | Exportez la variable avant de compiler, ou inlinez le chemin. |
+| ``invalid `$` variable syntax in `<path>`; expected `$NAME` where NAME is alphanumeric or `_` `` | Un `$` nu ou un nom de variable avec des caractères illégaux. | Écrivez les variables comme `$NAME` en utilisant lettres, chiffres et soulignés. |
+| ``relative base paths require `CARGO_MANIFEST_DIR` to be set; build through cargo`` | Un chemin relatif est utilisé en dehors d'un build cargo. | Compilez via `cargo`, ou utilisez un chemin absolu. |
+
+## Diagnostics structurels
+
+Ces erreurs pointent vers l'énumération ou la variante fautive.
+
+| Message | Cause | Correctif |
+| :--- | :--- | :--- |
+| `` `localizedir` can only be applied to enums `` | L'attribut décore une struct, une union ou un autre élément. | Déplacez l'attribut sur une énumération. |
+| `` `localizedir` does not support generic enums; the embedded directories are concrete `include_dir` trees `` | L'énumération a des paramètres de type. | Supprimez les génériques ; l'arbre embarqué est une valeur concrète. |
+| `` `localizedir` requires at least one variant `` | Le corps de l'énumération est vide. | Ajoutez au moins une variante unitaire. |
+| `` `localizedir` only supports unit variants (no fields) `` | Une variante porte des champs. | Supprimez les champs ; la macro mappe les noms à des répertoires, pas à des données. |
+
+## Diagnostics de nommage
+
+| Message | Cause | Correctif |
+| :--- | :--- | :--- |
+| `variants map to duplicate directory names: <names>` | Deux variantes résolvent au même nom de répertoire. | Renommez une variante, ajustez un override `#[dir_name]`, ou changez le schéma `case`. |
+| ``inferred parent folder is empty; rename the enum or pass `parent = "..."` `` | L'inférence a produit un nom de dossier vide. | Passez `parent = "..."` explicitement. |
+| ``directory name is empty; pass `#[dir_name = "..."]` with a non-empty name`` | Un override `#[dir_name]` est une chaîne vide. | Fournissez un nom de répertoire non vide. |
+| ``unknown case `<value>`; expected one of snake, kebab, flat`` | La valeur `case` n'est pas un schéma connu. | Utilisez `snake`, `kebab` ou `flat`. |
+
+## Diagnostics d'attribut
+
+Ces erreurs pointent vers la clé ou la valeur d'option fautive.
+
+| Message | Cause | Correctif |
+| :--- | :--- | :--- |
+| ``unknown option `<key>`; expected one of `fallback`, `parent`, `case` `` | Le nom de l'option est mal orthographié. | Corrigez l'orthographe. |
+| ``duplicate option `<key>` `` | La même option apparaît deux fois. | Gardez une seule occurrence. |
+| Erreurs de style `expected string literal` pour le chemin de base ou une valeur d'option | Une expression non littérale se tient là où un littéral de chaîne est requis. | Utilisez un littéral de chaîne. |
+| ``expected `#[dir_name = "..."]` `` | L'attribut helper n'est pas sous la forme `NameValue` (par exemple un `#[dir_name]` nu). | Écrivez `#[dir_name = "name"]`. |
+| `` `dir_name` must be a string literal `` | La valeur de l'override est une expression ou un littéral non-chaîne. | Utilisez un littéral de chaîne. |
+| ``duplicate `#[dir_name]` attribute on variant`` | Une variante porte l'attribut helper deux fois. | Gardez un override par variante. |
+
+## Messages de panique (exécution)
+
+Deux messages peuvent faire surface à l'exécution, tous deux depuis `to_localized_dir` :
+
+| Message | Déclencheur | Correctif |
+| :--- | :--- | :--- |
+| ``localizedir: no embedded directory for locale `<locale>` (variant `<dir_name>`)`` | La locale est inconnue et aucun `fallback` n'est configuré. | Vérifiez `has_locale()` d'abord, ou configurez un fallback. |
+| ``localizedir: no embedded directory for variant `<dir_name>` with locale `<locale>` nor fallback `<fallback>` (base: `<base_path>`)`` | À la fois la locale demandée et le fallback sont manquants. | Corrigez la clé de locale demandée ; la locale de fallback est toujours une découverte, donc cela signifie généralement une faute de frappe. |
+
+`try_to_localized_dir` ne panique jamais — il retourne `None` à la place.
+
+## Étapes suivantes
+
+<LinkCard title="Corriger les erreurs de compilation" href="/guides/fix-compile-errors/" />
+<LinkCard title="Options d'attribut" href="/reference/attribute/" />

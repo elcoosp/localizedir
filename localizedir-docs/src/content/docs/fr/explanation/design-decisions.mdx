@@ -1,0 +1,49 @@
+---
+title: Décisions de conception
+description: Pourquoi localizedir ressemble à ce qu'il est — recherches Option-first, fallback uniquement sur l'API paniquante, clés de locale simples, et les fonctionnalités rejetées.
+type: explanation
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+
+La [revue de conception](https://github.com/elcoosp/localizedir/blob/main/docs/BRAINSTORM.md) du crate a enregistré chaque idée acceptée et rejetée avec sa justification, afin que le raisonnement reste visible. Cette page résume les décisions qui façonnent l'API publique.
+
+## Recherche Option-first
+
+`try_to_localized_dir` retournant `Option` est la primitive ; `to_localized_dir` est le wrapper de commodité construit par-dessus. C'est l'ordre idiomatique en Rust : la méthode non-paniquante est celle que vous ne pouvez pas éviter de voir, et la paniquante documente sa condition de panique. La variante paniquante existe parce que le cas courant — une locale que vous avez validée ou un fallback que vous avez configuré — ne devrait pas forcer du code répétitif `.expect()` à chaque site d'appel.
+
+## Le fallback vit uniquement sur l'API paniquante
+
+Avec `fallback = "en"` configuré, seul `to_localized_dir` consulte le fallback. `try_to_localized_dir` reste pur : il répond à exactement une question — cette locale existe-t-elle dans l'arbre ? — et laisse la politique de fallback visible dans le code de l'appelant. Une méthode `try_` qui substituerait silencieusement le fallback cacherait précisément la situation que son `None` existe pour signaler.
+
+## Clés de locale &str simples
+
+Les locales sont de simples noms de répertoires `&'static str`, pas un newtype `LanguageTag`. Un type de tag de langage validé appartient à des crates i18n de plus haut niveau ; ici, il ajouterait une frontière de conversion à chaque recherche alors que le travail de la macro est l'embed et la navigation. Si vous possédez déjà un type de locale, convertissez-le en sa clé de répertoire et appelez le trait.
+
+## Pas de normalisation à l'exécution
+
+Le passage de `"FR"` à `"fr"` ou la correspondance de `"en-US"` à `"en"` au moment de la recherche a été rejeté : chaque normalisation alloue, et deviner silencieusement cache les fautes de frappe qu'une correspondance exacte fait surface immédiatement. L'option `fallback` couvre le besoin opérationnel (servir quelque chose de sensé pour les locales inattendues), et le [guide des locales inconnues](/guides/handle-unknown-locales/) montre où placer une couche de négociation explicite quand vous voulez une correspondance par préfixe.
+
+## Convert_case plutôt que du casing fait main
+
+La première implémentation portait un `pascal_to_snake_case` fait main qui mutilait les acronymes — `APIResponseDirs` devenait `a_p_i_response`. Le correctif l'a remplacé par [convert_case](https://crates.io/crates/convert_case), qui était déjà une dépendance. La leçon se généralise : le casing des identifiants est un problème résolu avec des cas limites portant des acronymes ; ne le résolvez pas à nouveau à l'intérieur d'une macro.
+
+## Fonctionnalités rejetées, pour mémoire
+
+| Idée rejetée | Pourquoi |
+| :--- | :--- |
+| Normalisation de locale à l'exécution (case folding, `-` → `_`) | Alloue par recherche et cache les fautes de frappe ; `fallback` couvre le besoin opérationnel. |
+| Correspondance par préfixe BCP-47 (`en-GB` → `en`) | Tout un sous-domaine i18n ; composez-le vous-même devant la recherche. |
+| Chemins de base multiples par énumération | YAGNI ; `include_dir` 0.7 n'offre aucun hook de filtrage de fichiers sans le forker. |
+| Filtrage de fichiers par glob | Même raison que ci-dessus. |
+| Support serde / énumérations de locales générées | `available_locales()` expose déjà les données ; les câbler dans vos types est une ligne de votre côté. |
+| Descente manuelle de l'arbre pour éviter une jointure `PathBuf` | À travers un objet trait, les emprunts cessent d'être `'static` ; une petite allocation achète une correction évidente. |
+
+## Ce qui a été accepté dans la même revue
+
+La même revue a livré le modèle à embed unique, la division en quatre modules du crate de macro (`args`, `naming`, `discovery`, `expand`), les diagnostics pointant vers le token via `syn::Error::into_compile_error`, les métadonnées partagées au niveau de l'espace de travail, et les portes qualité sur lesquelles vous pouvez compter en tant qu'utilisateur : 100 % de couverture de lignes imposée en CI, tests de snapshot trybuild pour la surface de diagnostic, `missing_docs` et clippy pedantic avec avertissements refusés, et audit de dépendances via `cargo-deny`.
+
+## Étapes suivantes
+
+<LinkCard title="Comment ça marche" href="/explanation/how-it-works/" />
+<LinkCard title="Notes de version" href="/reference/release-notes/" />

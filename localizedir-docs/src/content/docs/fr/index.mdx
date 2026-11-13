@@ -1,0 +1,73 @@
+---
+title: localizedir
+template: splash
+description: Inclusion de répertoires localisés à la compilation pour Rust — un seul embed, recherche par locale, et échec du build sur les erreurs structurelles.
+type: explanation
+pagefind: true
+hero:
+  title: "localizedir"
+  tagline: Inclusion de répertoires localisés à la compilation pour Rust
+  image:
+    file: ../../../assets/logo.png
+    alt: Dossiers imbriqués colorés contenant un globe, le logo localizedir
+  actions:
+    - text: Démarrer en cinq minutes
+      link: /tutorials/getting-started/
+      icon: rocket
+    - text: GitHub
+      link: https://github.com/elcoosp/localizedir
+      icon: github
+      variant: minimal
+---
+
+import { Aside, Card, CardGrid, Code, LinkButton, LinkCard } from '@astrojs/starlight/components';
+
+`localizedir` transforme une énumération en accesseurs conscients de la locale vers des répertoires embarqués avec [include_dir](https://crates.io/crates/include_dir). Vous annotez une énumération, la macro embarque votre arbre de répertoires localisés une fois à la compilation, et chaque recherche suivante est une navigation bon marché à l'intérieur de cet arbre — aucune E/S de fichier à l'exécution, aucun code répétitif.
+
+<Code lang="rust" code={`use localizedir::{LocalizeDir, localizedir};
+
+#[localizedir("tests/fixtures/localized")]
+enum AuthDirs {
+    Welcome,
+    ForgotPassword,
+}
+
+let dir = AuthDirs::Welcome.to_localized_dir("fr");
+assert!(dir.get_file("fr/auth/welcome/note.txt").is_some());`} />
+
+Les locales sont découvertes depuis le système de fichiers à la compilation. Les fautes de frappe dans la structure de répertoires font échouer le build avec une erreur pointant vers le token fautif ; les locales inconnues à l'exécution retournent `Option` au lieu d'une surprise de type fichier non trouvé.
+
+## Choisissez votre parcours
+
+<CardGrid stagger>
+  <Card title="Construisez votre première énumération localisée" icon="rocket">
+    Suivez le tutoriel complet : préparez un arbre de répertoires, annotez une énumération, et recherchez les répertoires embarqués par locale.
+    <LinkCard title="Tutoriel de démarrage" href="/tutorials/getting-started/" />
+  </Card>
+  <Card title="Résolvez un problème spécifique" icon="puzzle">
+    Guides courts et ciblés : organisez votre arbre, contrôlez les noms de répertoires, gérez les locales inconnues, ou corrigez une erreur de compilation.
+    <LinkCard title="Parcourir les guides pratiques" href="/guides/organize-your-directories/" />
+  </Card>
+  <Card title="Consultez l'API exacte" icon="open-book">
+    Options d'attribut, chaque méthode `LocalizeDir`, règles de nommage, le catalogue complet des erreurs de compilation, et l'interopérabilité `include_dir`.
+    <LinkCard title="Ouvrir la référence" href="/reference/attribute/" />
+  </Card>
+  <Card title="Comprenez la conception" icon="information">
+    Comment le modèle à embed unique garde les compilations rapides, et pourquoi le cœur de recherche ne panique jamais et ne normalise pas les locales.
+    <LinkCard title="Lire les explications" href="/explanation/how-it-works/" />
+  </Card>
+</CardGrid>
+
+<LinkButton href="/tutorials/getting-started/" icon="right-arrow">Commencer le tutoriel</LinkButton>
+
+## Pourquoi localizedir
+
+- **Un embed, de nombreuses recherches** — le répertoire de base entier est embarqué une seule fois via une expansion `include_dir!`, donc les temps de compilation restent plats à mesure que votre arbre de modèles grandit.
+- **Sûreté à la compilation** — les chemins de base manquants, les répertoires `(locale, variant)` manquants, les noms de répertoires en double et les attributs mal formés échouent tous à la compilation, au bon emplacement source.
+- **Cœur non-paniquant** — `try_to_localized_dir` retourne `Option` ; le paniquant `to_localized_dir` ajoute une locale `fallback` optionnelle par-dessus.
+- **Chemins robustes en espace de travail** — les chemins de base relatifs s'ancrent à `$CARGO_MANIFEST_DIR`, et l'interpolation `$VAR` correspond à la sémantique propre d'`include_dir!`.
+- **Compatible IDE** — le code généré est du Rust simple et documenté, entièrement navigable avec rust-analyzer.
+
+<Aside type="note">
+localizedir nécessite Rust 1.88 ou plus récent (édition 2024) et fonctionne sous Linux, macOS et Windows.
+</Aside>

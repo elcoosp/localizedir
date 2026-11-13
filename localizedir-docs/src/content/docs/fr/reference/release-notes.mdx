@@ -1,0 +1,39 @@
+---
+title: Notes de version
+description: Ce qui a été livré dans localizedir 0.2.0 et où suivre les nouvelles versions.
+type: reference
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+
+## Version 0.2.0 — la refonte à la compilation
+
+La version 0.2.0 a reconstruit le crate autour d'une architecture à embed unique et d'une API Option-first. Les points forts :
+
+### API
+
+- **Cœur non-paniquant** — `try_to_localized_dir` retourne `Option<&'static Dir<'static>>` ; `to_localized_dir` est le wrapper paniquant qui honore `fallback`.
+- **Nouvelles méthodes de métadonnées** — `base_path()`, `full_path(locale)`, `has_locale(locale)` et `fallback_locale()` rejoignent les originales `available_locales()`, `parent_folder()` et `dir_name()`.
+- **Nouvelles options d'attribut** — `fallback = "..."`, `parent = "..."` et `case = "snake" | "kebab" | "flat"`, plus les overrides `#[dir_name = "..."]` par variante.
+
+### Performance
+
+- Le répertoire de base est embarqué **une fois** via une seule expansion `include_dir!` au lieu d'une expansion par paire `(variant, locale)`. Les recherches naviguent l'arbre embarqué, donc les compilations restent rapides à mesure que l'arbre grandit et le fallback à l'exécution est une navigation d'arbre plutôt qu'un bras de match généré.
+
+### Diagnostics
+
+- Les erreurs de compilation pointent vers le token fautif au lieu de faire surface comme `proc-macro panicked`. Les problèmes de système de fichiers listent chaque chemin `(locale, variant)` manquant. La surface de diagnostic est testée par snapshot avec [trybuild](https://docs.rs/trybuild).
+
+### Qualité interne
+
+- Le crate de macro est divisé en modules `args`, `naming`, `discovery` et `expand`, chacun testé unitairement sans contexte de compilateur.
+- La conversion de nom utilise [convert_case](https://crates.io/crates/convert_case), corrigeant la gestion des acronymes (`APIResponseDirs` → `api_response`).
+- L'espace de travail impose `missing_docs` et clippy `pedantic` avec avertissements refusés, 100 % de couverture de lignes via `cargo-llvm-cov`, et `cargo-deny` pour les avis, licences et bans.
+- La CI exécute les tests sous Linux, macOS et Windows, vérifie la MSRV 1.88, et les releases sont automatisées avec les changelogs [git-cliff](https://git-cliff.org).
+
+## Suivre les versions
+
+Les nouvelles versions sont publiées sur [crates.io](https://crates.io/crates/localizedir) et taguées sur GitHub. Le changelog complet est généré à partir des commits conventionnels :
+
+<LinkCard title="Changelog complet sur GitHub" href="https://github.com/elcoosp/localizedir/blob/main/CHANGELOG.md" />
+<LinkCard title="Documentation de l'API sur docs.rs" href="https://docs.rs/localizedir" />
