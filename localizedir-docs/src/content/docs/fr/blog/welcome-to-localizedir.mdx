@@ -1,0 +1,70 @@
+---
+title: Transformer les fichiers de traduction manquants en erreurs de compilation
+date: 2026-11-15
+cover:
+  alt: Architecture de Localizedir
+  image: ../../blog/welcome-cover.jpg
+image: ../../blog/welcome-cover.jpg
+---
+
+import { Card, CardGrid, Aside } from '@astrojs/starlight/components';
+
+Lorsqu'un backend Rust sert des modèles d'e-mails localisés ou des documents juridiques, les fichiers manquants se manifestent généralement à l'exécution, souvent au moment où un utilisateur d'une langue secondaire demande une réinitialisation de mot de passe et que le serveur tombe sur un chemin absent du disque.
+
+Nous avons conçu `localizedir` (`0.2`) pour que `cargo build` détecte les répertoires `(locale, variant)` manquants avant même que le binaire ne soit livré.
+
+## L'objectif
+
+Nous voulions embarquer des arborescences de répertoires localisés dans le binaire avec `include_dir` sans écrire de branches `match` répétitives ni ré-embarquer l'arborescence une fois par variante d'énumération. Si `fr/auth/forgot_password` n'existe pas sur le disque lors de la compilation, le build doit échouer avec un diagnostic du compilateur pointant directement sur l'énumération.
+
+## Fonctionnement
+
+Annoter une énumération avec `#[localizedir("path/to/locales")]` exécute une macro procédurale qui inspecte l'arborescence au moment de la compilation, découvre tous les sous-répertoires de langues, vérifie chaque dossier de variante et génère une implémentation de `LocalizeDir`.
+
+<CardGrid stagger>
+  <Card title="Inclusion unique de l'arborescence" icon="rocket">
+    Le chemin de base est embarqué une seule fois avec `include_dir!`. Les recherches de variantes naviguent dans des tranches de cette arborescence statique plutôt que de dupliquer les octets.
+  </Card>
+  <Card title="Diagnostics ancrés aux jetons" icon="approve-check">
+    Les dossiers manquants, noms de répertoires en double ou chemins `$VAR` non définis émettent des spans `compile_error!` attachés à l'attribut fautif.
+  </Card>
+  <Card title="API faillibles et avec repli" icon="puzzle">
+    `try_to_localized_dir` renvoie `Option<&'static Dir<'static>>`, tandis que `to_localized_dir` prend en charge un attribut optionnel `fallback = "en"`.
+  </Card>
+  <Card title="Chemins relatifs au workspace" icon="setting">
+    Les chemins sont résolus relativement à `$CARGO_MANIFEST_DIR`, évitant les incohérences de répertoire courant au sein des workspaces Cargo multi-crates.
+  </Card>
+</CardGrid>
+
+## Ce que cela a coûté
+
+Comme la macro lit le système de fichiers durant la compilation, l'ajout d'un nouveau répertoire de langue oblige Cargo à ré-étendre la macro. Nous maintenons également une couverture de lignes de 100 % sur les tests unitaires et les suites d'échec de compilation `trybuild` afin de garantir que des arborescences invalides produisent des messages d'erreur clairs plutôt que des paniques de macro.
+
+<Aside type="caution" title="Cas où cela ne s'applique pas">
+Puisque chaque langue est embarquée dans l'exécutable à la compilation, la mise à jour des textes nécessite de recompiler et redéployer le binaire. Si des profils non techniques doivent modifier les traductions en direct en production, chargez plutôt les modèles depuis un stockage externe ou un bucket objet.
+</Aside>
+
+## Démarrer
+
+```toml
+[dependencies]
+localizedir = "0.2"
+include_dir = "0.7"
+```
+
+```rust
+use localizedir::{LocalizeDir, localizedir};
+
+#[localizedir("assets/localized", fallback = "en")]
+enum AuthEmails {
+    Welcome,
+    PasswordReset,
+}
+
+fn main() {
+    let dir = AuthEmails::Welcome.to_localized_dir("fr");
+    assert!(dir.get_file("fr/auth/welcome/index.html").is_some());
+}
+```
+
+Consultez le [tutoriel de démarrage](/fr/tutorials/getting-started/) pour découvrir les règles d'organisation des répertoires et les options de nommage (`snake`, `kebab` et `flat`).
