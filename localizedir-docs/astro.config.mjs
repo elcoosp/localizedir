@@ -1,8 +1,6 @@
 import { defineDocsConfig } from '@elcoosp/docs-toolkit/config';
-import imageZoom from "starlight-image-zoom";
 
 export default await defineDocsConfig({
-  plugins: [imageZoom()],
   llmsTxt: {},
   site: 'https://localizedir.vercel.app',
   domain: 'localizedir.vercel.app',
