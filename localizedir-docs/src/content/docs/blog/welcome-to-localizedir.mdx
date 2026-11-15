@@ -1,0 +1,70 @@
+---
+title: Turning missing translation files into compile-time errors
+date: 2026-11-15
+cover:
+  alt: Localizedir Architecture
+  image: ./welcome-cover.jpg
+image: ./welcome-cover.jpg
+---
+
+import { Card, CardGrid, Aside } from '@astrojs/starlight/components';
+
+When a Rust backend serves localized email templates or legal documents, missing files usually show up at runtime, often when a user in a secondary locale triggers a password reset and the server hits a missing path on disk.
+
+We built `localizedir` (`0.2`) so `cargo build` catches missing `(locale, variant)` directories before the binary ever ships.
+
+## The Goal
+
+We wanted to embed localized directory trees into the binary using `include_dir` without writing repetitive `match` arms or re-embedding the directory tree once per enum variant. If `fr/auth/forgot_password` does not exist on disk during compilation, the build should fail with a compiler diagnostic pointing straight at the enum.
+
+## How it works
+
+Annotating an enum with `#[localizedir("path/to/locales")]` runs a procedural macro that inspects the directory tree at compile time, discovers all locale subdirectories, verifies every variant folder, and generates a `LocalizeDir` implementation.
+
+<CardGrid stagger>
+  <Card title="Single Tree Embed" icon="rocket">
+    The base path is embedded once with `include_dir!`. Variant lookups navigate slices inside that static tree rather than duplicating bytes.
+  </Card>
+  <Card title="Token-Anchored Diagnostics" icon="approve-check">
+    Missing folders, duplicate directory names, or unset `$VAR` paths emit `compile_error!` spans attached to the offending attribute.
+  </Card>
+  <Card title="Fallible & Fallback APIs" icon="puzzle">
+    `try_to_localized_dir` returns `Option<&'static Dir<'static>>`, while `to_localized_dir` supports an optional `fallback = "en"` attribute.
+  </Card>
+  <Card title="Workspace-Relative Paths" icon="setting">
+    Paths resolve relative to `$CARGO_MANIFEST_DIR`, avoiding working-directory mismatches inside multi-crate Cargo workspaces.
+  </Card>
+</CardGrid>
+
+## What it cost
+
+Because the macro reads the filesystem during compilation, adding a new locale directory requires Cargo to re-expand the macro. We also keep 100% line coverage across unit tests and `trybuild` compile-fail suites to ensure broken directory trees produce clear error messages instead of macro panics.
+
+<Aside type="caution" title="Where this does not apply">
+Because every locale is embedded in the executable at build time, updating copy requires recompiling and redeploying the binary. If non-engineers need to edit translations live in production, load templates from an external store or object bucket instead.
+</Aside>
+
+## Getting started
+
+```toml
+[dependencies]
+localizedir = "0.2"
+include_dir = "0.7"
+```
+
+```rust
+use localizedir::{LocalizeDir, localizedir};
+
+#[localizedir("assets/localized", fallback = "en")]
+enum AuthEmails {
+    Welcome,
+    PasswordReset,
+}
+
+fn main() {
+    let dir = AuthEmails::Welcome.to_localized_dir("fr");
+    assert!(dir.get_file("fr/auth/welcome/index.html").is_some());
+}
+```
+
+Check the [getting started tutorial](/tutorials/getting-started/) for directory layout rules and naming options (`snake`, `kebab`, and `flat`).
