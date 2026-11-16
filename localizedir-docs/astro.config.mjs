@@ -6,15 +6,10 @@ export default await defineDocsConfig({
   domain: 'localizedir.vercel.app',
   title: "localizedir",
   description: "Compile-time localized directory inclusion for Rust: embed your localized directories once and generate locale-aware accessors.",
-  sidebar: [],
   extraStarlight: {
-                        expressiveCode: {
-                        	themes: ['github-light', 'github-dark']
-                        },
                         title: "localizedir",
                         description:
                                 "Compile-time localized directory inclusion for Rust: embed your localized directories once and generate locale-aware accessors.",
-                        favicon: '/favicon.png',
                         social: [
                                 {
                                         icon: "github",
