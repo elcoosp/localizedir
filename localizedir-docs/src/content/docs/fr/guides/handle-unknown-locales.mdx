@@ -12,11 +12,7 @@ Ce guide vous aide à choisir la bonne méthode de recherche pour chaque site d'
 
 Le trait offre une primitive non-paniquante et un wrapper de commodité :
 
-<Code lang="rust" code={`// Returns None when the locale has no embedded directory.
-let maybe_dir: Option<&Dir> = AuthDirs::Welcome.try_to_localized_dir("pt-BR");
-
-// Panics when the locale (and the configured fallback, if any) is missing.
-let dir: &Dir = AuthDirs::Welcome.to_localized_dir("fr");`} />
+<Code lang="rust" code={"// Returns None when the locale has no embedded directory.\nlet maybe_dir: Option<&Dir> = AuthDirs::Welcome.try_to_localized_dir(\"pt-BR\");\n\n// Panics when the locale (and the configured fallback, if any) is missing.\nlet dir: &Dir = AuthDirs::Welcome.to_localized_dir(\"fr\");"} />
 
 Utilisez `try_to_localized_dir` aux frontières où la locale vient de l'entrée utilisateur — en-têtes de requête, fichiers de configuration, drapeaux CLI. Utilisez `to_localized_dir` quand vous avez déjà validé la locale ou quand une locale manquante est un bogue sur lequel vous voulez planter.
 
@@ -28,20 +24,7 @@ Utilisez `try_to_localized_dir` aux frontières où la locale vient de l'entrée
 
 Ajoutez `fallback = "<locale>"` à l'attribut. La locale que vous nommez doit être l'une des locales découvertes, parce qu'elle est validée contre le même arbre :
 
-<Code lang="rust" code={`#[localizedir("mjml-dist/localized", fallback = "en")]
-enum AuthEmails {
-    Welcome,
-    PasswordReset,
-}
-
-fn render_email(template: AuthEmails, locale: &str) -> String {
-    // A request for "pt-BR" returns the "en" directory instead of panicking.
-    let dir = template.to_localized_dir(locale);
-    let body = dir
-                    .get_file(template.full_path(locale).join("index.mjml"))
-                    .expect("index.mjml is embedded");
-    String::from_utf8_lossy(body.contents()).into_owned()
-}`} />
+<Code lang="rust" code={"#[localizedir(\"mjml-dist/localized\", fallback = \"en\")]\nenum AuthEmails {\n    Welcome,\n    PasswordReset,\n}\n\nfn render_email(template: AuthEmails, locale: &str) -> String {\n    // A request for \"pt-BR\" returns the \"en\" directory instead of panicking.\n    let dir = template.to_localized_dir(locale);\n    let body = dir\n                    .get_file(template.full_path(locale).join(\"index.mjml\"))\n                    .expect(\"index.mjml is embedded\");\n    String::from_utf8_lossy(body.contents()).into_owned()\n}"} />
 
 Avec un fallback configuré, une panique se produit encore quand *à la fois* la locale demandée et le fallback sont manquants — et le message de panique nomme les deux, plus le chemin de base, afin que vous puissiez le diagnostiquer depuis les journaux.
 
@@ -53,18 +36,7 @@ Avec un fallback configuré, une panique se produit encore quand *à la fois* la
 
 Parce que les recherches font correspondre exactement les noms de répertoires découverts, le motif habituel est une petite étape de négociation devant la recherche :
 
-<Code lang="rust" code={`fn resolve_locale(requested: &str) -> &str {
-    let normalized = requested.to_lowercase();
-    // Exact hit first, then a language-prefix fallback such as en-US → en.
-    if AuthDirs::has_locale(&normalized) {
-                    return Box::leak(normalized.into_boxed_str());
-    }
-    let language = normalized.split('-').next().unwrap_or(&normalized);
-    if AuthDirs::has_locale(language) {
-                    return Box::leak(language.to_string().into_boxed_str());
-    }
-    AuthDirs::fallback_locale().unwrap_or("en")
-}`} />
+<Code lang="rust" code={"fn resolve_locale(requested: &str) -> &str {\n    let normalized = requested.to_lowercase();\n    // Exact hit first, then a language-prefix fallback such as en-US \u2192 en.\n    if AuthDirs::has_locale(&normalized) {\n                    return Box::leak(normalized.into_boxed_str());\n    }\n    let language = normalized.split('-').next().unwrap_or(&normalized);\n    if AuthDirs::has_locale(language) {\n                    return Box::leak(language.to_string().into_boxed_str());\n    }\n    AuthDirs::fallback_locale().unwrap_or(\"en\")\n}"} />
 
 Vous possédez la politique ; le crate possède la correction de l'arbre. Cette séparation garde `localizedir` sans allocation sur le chemin chaud et laisse la complexité BCP-47 au code qui en a besoin.
 

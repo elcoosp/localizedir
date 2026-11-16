@@ -12,7 +12,7 @@ Ce guide vous montre comment disposer et placer votre arbre de répertoires loca
 
 La macro attend exactement cette imbrication sous votre chemin de base :
 
-<Code lang="text" code={`<base path>/<locale>/<parent folder>/<variant directory>/`} />
+<Code lang="text" code={"<base path>/<locale>/<parent folder>/<variant directory>/"} />
 
 - **Locale** — un sous-répertoire du chemin de base, découvert par scan. Le nom est la clé de recherche exacte à l'exécution (`fr`, `pt-BR`, …).
 - **Dossier parent** — inféré depuis le nom de l'énumération (`AuthDirs` → `auth`) sauf si vous le remplacez avec `parent = "..."`.
@@ -24,10 +24,7 @@ Chaque paire `(locale, variant)` doit exister avant que le code ne compile. Les 
 
 Passez le chemin de base comme premier argument d'attribut. Les chemins relatifs s'ancrent au *répertoire manifeste du crate* (`CARGO_MANIFEST_DIR`), pas au répertoire de travail du compilateur :
 
-<Code lang="rust" code={`#[localizedir("tests/fixtures/localized")] // → $CARGO_MANIFEST_DIR/tests/fixtures/localized
-enum AuthDirs {
-    Welcome,
-}`} />
+<Code lang="rust" code={"#[localizedir(\"tests/fixtures/localized\")] // \u2192 $CARGO_MANIFEST_DIR/tests/fixtures/localized\nenum AuthDirs {\n    Welcome,\n}"} />
 
 Cet ancrage est ce qui rend la macro fiable à l'intérieur des espaces de travail cargo, où le répertoire de travail du compilateur est la racine de l'espace de travail plutôt que la racine du paquet. Les chemins absolus sont utilisés tels quels.
 
@@ -57,15 +54,7 @@ Les fichiers directement sous le chemin de base sont ignorés pendant la découv
 
 Les chemins de base supportent l'interpolation `$VAR` avec les mêmes règles qu'`include_dir!` : un `$` suivi de lettres ASCII, de chiffres ou de soulignés nomme une variable, qui est recherchée une fois sans expansion récursive.
 
-<Code lang="rust" code={`#[localizedir("$CARGO_MANIFEST_DIR/locales")]
-enum AuthDirs {
-    Welcome,
-}
-
-#[localizedir("$TEMPLATE_ROOT/auth")]
-enum MailDirs {
-    Welcome,
-}`} />
+<Code lang="rust" code={"#[localizedir(\"$CARGO_MANIFEST_DIR/locales\")]\nenum AuthDirs {\n    Welcome,\n}\n\n#[localizedir(\"$TEMPLATE_ROOT/auth\")]\nenum MailDirs {\n    Welcome,\n}"} />
 
 Une variable non définie fait échouer la compilation avec un message nommant la variable et l'attribut qui l'a utilisée, donc une machine CI mal configurée fait surface immédiatement au lieu d'embarquer le mauvais arbre.
 
@@ -73,16 +62,7 @@ Une variable non définie fait échouer la compilation avec un message nommant l
 
 Plusieurs énumérations peuvent pointer vers le même chemin de base avec différents dossiers `parent` :
 
-<Code lang="rust" code={`#[localizedir("locales", parent = "auth")]
-enum AuthDirs {
-    Welcome,
-    ForgotPassword,
-}
-
-#[localizedir("locales", parent = "email")]
-enum MailDirs {
-    Newsletter,
-}`} />
+<Code lang="rust" code={"#[localizedir(\"locales\", parent = \"auth\")]\nenum AuthDirs {\n    Welcome,\n    ForgotPassword,\n}\n\n#[localizedir(\"locales\", parent = \"email\")]\nenum MailDirs {\n    Newsletter,\n}"} />
 
 Les deux énumérations embarquent le même arbre une fois et le naviguent indépendamment.
 

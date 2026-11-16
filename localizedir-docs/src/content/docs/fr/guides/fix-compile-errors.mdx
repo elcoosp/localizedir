@@ -12,12 +12,7 @@ Ce guide vous montre comment lire un diagnostic `localizedir` et corriger sa cau
 
 Les erreurs `localizedir` portent toujours trois informations : ce qui est faux, où siège le token fautif, et (pour les problèmes de système de fichiers) les chemins exacts impliqués :
 
-<Code lang="text" code={`error: missing directories for some (locale, variant) pairs:
-  - /path/to/crate/locales/fr/auth/forgot_password
- --> src/lib.rs:3:15
-  |
-3 | #[localizedir("locales")]
-  |               ^^^^^^^^^`} />
+<Code lang="text" code={"error: missing directories for some (locale, variant) pairs:\n  - /path/to/crate/locales/fr/auth/forgot_password\n --> src/lib.rs:3:15\n  |\n3 | #[localizedir(\"locales\")]\n  |               ^^^^^^^^^"} />
 
 Le span (ici `^^^^^^^^^`) marque le token à regarder — le chemin de base pour les problèmes de système de fichiers, la variante pour les problèmes par variante, la clé d'option pour les problèmes d'option.
 

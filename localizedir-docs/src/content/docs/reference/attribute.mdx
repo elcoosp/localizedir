@@ -8,11 +8,7 @@ import { Code, LinkCard } from '@astrojs/starlight/components';
 
 The `#[localizedir(...)]` attribute macro accepts one positional base path followed by optional comma-separated `key = "value"` options. Options may appear in any order, and a trailing comma is tolerated.
 
-<Code lang="rust" code={`#[localizedir("templates/localized", fallback = "en", parent = "auth", case = "kebab")]
-enum AuthDirs {
-    Welcome,
-    ForgotPassword,
-}`} />
+<Code lang="rust" code={"#[localizedir(\"templates/localized\", fallback = \"en\", parent = \"auth\", case = \"kebab\")]\nenum AuthDirs {\n    Welcome,\n    ForgotPassword,\n}"} />
 
 ## Options
 
@@ -37,12 +33,7 @@ The base path is kept exactly as written and returned verbatim by `LocalizeDir::
 
 Individual variants accept a `#[dir_name = "..."]` attribute that overrides the name produced by `case`:
 
-<Code lang="rust" code={`#[localizedir("assets/localized")]
-enum MailTemplates {
-    #[dir_name = "welcome_v2"]
-    Welcome,
-    PasswordReset,
-}`} />
+<Code lang="rust" code={"#[localizedir(\"assets/localized\")]\nenum MailTemplates {\n    #[dir_name = \"welcome_v2\"]\n    Welcome,\n    PasswordReset,\n}"} />
 
 Rules:
 

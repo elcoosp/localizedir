@@ -12,13 +12,7 @@ Ce guide vous montre chaque levier qui mappe les noms Rust sur les noms de répe
 
 Par défaut, la macro infère le dossier parent depuis le nom de l'énumération en supprimant un suffixe connu et en convertissant le reste en `snake_case`, et transforme chaque nom de variante en nom de répertoire `snake_case` :
 
-<Code lang="rust" code={`#[localizedir("locales")]
-enum UserProfileDirs {
-    ForgotPassword,
-}
-// parent folder: "user_profile"
-// ForgotPassword → forgot_password
-// looks up: <base>/<locale>/user_profile/forgot_password`} />
+<Code lang="rust" code={"#[localizedir(\"locales\")]\nenum UserProfileDirs {\n    ForgotPassword,\n}\n// parent folder: \"user_profile\"\n// ForgotPassword \u2192 forgot_password\n// looks up: <base>/<locale>/user_profile/forgot_password"} />
 
 L'inférence gère correctement les acronymes (`APIResponseDirs` → `api_response`, `MJMLTemplates` → `mjml`). Voir la [référence des conventions de nommage](/reference/naming-conventions/) pour la table complète des suffixes.
 
@@ -26,13 +20,7 @@ L'inférence gère correctement les acronymes (`APIResponseDirs` → `api_respon
 
 Quand vos répertoires utilisent une convention différente, définissez `case` à `snake`, `kebab` ou `flat` :
 
-<Code lang="rust" code={`#[localizedir("assets/legal", case = "kebab")]
-enum LegalDocs {
-    TermsOfService,
-    PrivacyPolicy,
-}
-// TermsOfService → terms-of-service
-// PrivacyPolicy  → privacy-policy`} />
+<Code lang="rust" code={"#[localizedir(\"assets/legal\", case = \"kebab\")]\nenum LegalDocs {\n    TermsOfService,\n    PrivacyPolicy,\n}\n// TermsOfService \u2192 terms-of-service\n// PrivacyPolicy  \u2192 privacy-policy"} />
 
 <Aside type="tip">
 `flat` supprime entièrement les séparateurs (`ForgotPassword` → `forgotpassword`). C'est un dernier recours utile quand un arbre existant a été généré à partir de noms concaténés.
@@ -42,14 +30,7 @@ enum LegalDocs {
 
 Définissez `#[dir_name = "..."]` sur une variante quand un répertoire ne suit pas le schéma :
 
-<Code lang="rust" code={`#[localizedir("assets/localized")]
-enum MailTemplates {
-    #[dir_name = "welcome_v2"]
-    Welcome,
-    PasswordReset,
-}
-// Welcome        → welcome_v2 (override wins)
-// PasswordReset  → password_reset (case default still applies)`} />
+<Code lang="rust" code={"#[localizedir(\"assets/localized\")]\nenum MailTemplates {\n    #[dir_name = \"welcome_v2\"]\n    Welcome,\n    PasswordReset,\n}\n// Welcome        \u2192 welcome_v2 (override wins)\n// PasswordReset  \u2192 password_reset (case default still applies)"} />
 
 La macro supprime l'attribut helper de l'énumération ré-émise, donc rien ne fuite dans l'espace de noms de votre crate. Les autres attributs — y compris les commentaires de doc — sont préservés.
 
@@ -57,23 +38,13 @@ La macro supprime l'attribut helper de l'énumération ré-émise, donc rien ne 
 
 Définissez `parent = "..."` quand le dossier inféré ne correspond pas à votre arbre, ou quand plusieurs énumérations partagent un même chemin de base :
 
-<Code lang="rust" code={`#[localizedir("locales", parent = "auth")]
-enum WhateverDirs {
-    Welcome,
-}
-// looks up: <base>/<locale>/auth/welcome`} />
+<Code lang="rust" code={"#[localizedir(\"locales\", parent = \"auth\")]\nenum WhateverDirs {\n    Welcome,\n}\n// looks up: <base>/<locale>/auth/welcome"} />
 
 ## Éviter les noms de répertoires en double
 
 Deux variantes qui résolvent au même nom de répertoire font échouer la compilation, parce qu'un répertoire embarqué ne pourrait pas servir les deux variantes :
 
-<Code lang="rust" code={`#[localizedir("locales")]
-enum AuthDirs {
-    #[dir_name = "welcome"]
-    Welcome,
-    #[dir_name = "welcome"]
-    Hello, // error: variants map to duplicate directory names: welcome
-}`} />
+<Code lang="rust" code={"#[localizedir(\"locales\")]\nenum AuthDirs {\n    #[dir_name = \"welcome\"]\n    Welcome,\n    #[dir_name = \"welcome\"]\n    Hello, // error: variants map to duplicate directory names: welcome\n}"} />
 
 Corrigez la collision en renommant une variante, en changeant un override `#[dir_name]`, ou en pointant une variante vers un `case` différent.
 

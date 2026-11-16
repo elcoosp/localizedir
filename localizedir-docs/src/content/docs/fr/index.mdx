@@ -24,16 +24,7 @@ import { Aside, Card, CardGrid, Code, LinkButton, LinkCard } from '@astrojs/star
 
 `localizedir` transforme une énumération en accesseurs conscients de la locale vers des répertoires embarqués avec [include_dir](https://crates.io/crates/include_dir). Vous annotez une énumération, la macro embarque votre arbre de répertoires localisés une fois à la compilation, et chaque recherche suivante est une navigation bon marché à l'intérieur de cet arbre — aucune E/S de fichier à l'exécution, aucun code répétitif.
 
-<Code lang="rust" code={`use localizedir::{LocalizeDir, localizedir};
-
-#[localizedir("tests/fixtures/localized")]
-enum AuthDirs {
-    Welcome,
-    ForgotPassword,
-}
-
-let dir = AuthDirs::Welcome.to_localized_dir("fr");
-assert!(dir.get_file("fr/auth/welcome/note.txt").is_some());`} />
+<Code lang="rust" code={"use localizedir::{LocalizeDir, localizedir};\n\n#[localizedir(\"tests/fixtures/localized\")]\nenum AuthDirs {\n    Welcome,\n    ForgotPassword,\n}\n\nlet dir = AuthDirs::Welcome.to_localized_dir(\"fr\");\nassert!(dir.get_file(\"fr/auth/welcome/note.txt\").is_some());"} />
 
 Les locales sont découvertes depuis le système de fichiers à la compilation. Les fautes de frappe dans la structure de répertoires font échouer le build avec une erreur pointant vers le token fautif ; les locales inconnues à l'exécution retournent `Option` au lieu d'une surprise de type fichier non trouvé.
 

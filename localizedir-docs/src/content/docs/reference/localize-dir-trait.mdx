@@ -8,7 +8,7 @@ import { Code, LinkCard } from '@astrojs/starlight/components';
 
 Every enum annotated with `#[localizedir(...)]` implements the `LocalizeDir` trait. Import it alongside the macro:
 
-<Code lang="rust" code={`use localizedir::{LocalizeDir, localizedir};`} />
+<Code lang="rust" code={"use localizedir::{LocalizeDir, localizedir};"} />
 
 All trait methods are `const`-cheap: metadata comes from generated string literals and slices, and lookups navigate the embedded directory tree without touching the filesystem.
 
@@ -16,18 +16,17 @@ All trait methods are `const`-cheap: metadata comes from generated string litera
 
 ### try_to_localized_dir
 
-<Code lang="rust" code={`fn try_to_localized_dir(&self, locale: &str) -> Option<&'static Dir<'static>>;`} />
+<Code lang="rust" code={"fn try_to_localized_dir(&self, locale: &str) -> Option<&'static Dir<'static>>;"} />
 
 Returns the embedded directory for `locale`, or `None` when the locale is unknown. This is the non-panicking primitive; matching is exact against the locale names discovered at compile time.
 
-<Code lang="rust" code={`let dir = AuthDirs::Welcome.try_to_localized_dir("fr").expect("fr exists");
-assert!(dir.get_file("fr/auth/welcome/note.txt").is_some());`} />
+<Code lang="rust" code={"let dir = AuthDirs::Welcome.try_to_localized_dir(\"fr\").expect(\"fr exists\");\nassert!(dir.get_file(\"fr/auth/welcome/note.txt\").is_some());"} />
 
 The returned reference is `'static` and points into the binary — it lives for the rest of the process with no runtime cost per access.
 
 ### to_localized_dir
 
-<Code lang="rust" code={`fn to_localized_dir(&self, locale: &str) -> &'static Dir<'static>;`} />
+<Code lang="rust" code={"fn to_localized_dir(&self, locale: &str) -> &'static Dir<'static>;"} />
 
 Panicking convenience wrapper around `try_to_localized_dir`.
 
@@ -36,7 +35,7 @@ Panicking convenience wrapper around `try_to_localized_dir`.
 
 ### full_path
 
-<Code lang="rust" code={`fn full_path(&self, locale: &str) -> std::path::PathBuf;`} />
+<Code lang="rust" code={"fn full_path(&self, locale: &str) -> std::path::PathBuf;"} />
 
 Composes the embedded path of this variant's directory under `locale`, relative to the embedded root — for example `fr/auth/welcome`. The call is a pure composition: it does not require the locale to exist, and for discovered locales it always equals [`Dir::path()`](https://docs.rs/include_dir/latest/include_dir/struct.Dir.html#method.path) of the directory returned by the lookups.
 
@@ -44,47 +43,37 @@ Composes the embedded path of this variant's directory under `locale`, relative 
 
 ### available_locales
 
-<Code lang="rust" code={`fn available_locales() -> &'static [&'static str]
-where
-    Self: Sized;`} />
+<Code lang="rust" code={"fn available_locales() -> &'static [&'static str]\nwhere\n    Self: Sized;"} />
 
 The locales discovered at compile time under the base path, sorted and de-duplicated. Discovery scans the base path's immediate subdirectories and skips names starting with `.` or `_` plus `node_modules` and `target`.
 
 ### has_locale
 
-<Code lang="rust" code={`fn has_locale(locale: &str) -> bool
-where
-    Self: Sized;`} />
+<Code lang="rust" code={"fn has_locale(locale: &str) -> bool\nwhere\n    Self: Sized;"} />
 
 `true` when `locale` was discovered at compile time. Exact match — `"FR"` is not `"fr"`. The default implementation checks membership in `available_locales()`.
 
 ### fallback_locale
 
-<Code lang="rust" code={`fn fallback_locale() -> Option<&'static str>
-where
-    Self: Sized;`} />
+<Code lang="rust" code={"fn fallback_locale() -> Option<&'static str>\nwhere\n    Self: Sized;"} />
 
 The locale configured via `fallback = "..."`, or `None` by default. The generated override exists only when the attribute configures a fallback.
 
 ### base_path
 
-<Code lang="rust" code={`fn base_path() -> &'static str
-where
-    Self: Sized;`} />
+<Code lang="rust" code={"fn base_path() -> &'static str\nwhere\n    Self: Sized;"} />
 
 The base path exactly as written in the attribute, before `$VAR` interpolation. Useful for diagnostics and for composing file paths in logs.
 
 ### parent_folder
 
-<Code lang="rust" code={`fn parent_folder() -> &'static str
-where
-    Self: Sized;`} />
+<Code lang="rust" code={"fn parent_folder() -> &'static str\nwhere\n    Self: Sized;"} />
 
 The parent folder between the locale directory and the variant directories — inferred from the enum name unless overridden with `parent = "..."`.
 
 ### dir_name
 
-<Code lang="rust" code={`fn dir_name(&self) -> &'static str;`} />
+<Code lang="rust" code={"fn dir_name(&self) -> &'static str;"} />
 
 This variant's directory name in the configured `case` scheme, or the `#[dir_name = "..."]` override.
 

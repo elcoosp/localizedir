@@ -17,7 +17,7 @@ Ce tutoriel vous guide à travers votre première énumération `localizedir`, d
 
 Partez d'un crate binaire frais :
 
-<Code lang="bash" title="Terminal" code={`cargo new demo && cd demo`} />
+<Code lang="bash" title="Terminal" code={"cargo new demo && cd demo"} />
 
 ## 2. Préparer l'arbre de répertoires localisés
 
@@ -51,12 +51,10 @@ Mettez du contenu distinguable dans chaque fichier — par exemple `en:auth:welc
 
 <Tabs>
   <TabItem label="cargo add">
-<Code lang="bash" title="Terminal" code={` cargo add localizedir@0.2 include_dir@0.7`} />
+<Code lang="bash" title="Terminal" code={" cargo add localizedir@0.2 include_dir@0.7"} />
   </TabItem>
   <TabItem label="Cargo.toml">
-<Code lang="toml" code={`  [dependencies]
-  localizedir = "0.2"
-  include_dir = "0.7"`} />
+<Code lang="toml" code={"  [dependencies]\n  localizedir = \"0.2\"\n  include_dir = \"0.7\""} />
   </TabItem>
 </Tabs>
 
@@ -68,42 +66,17 @@ Vous avez besoin des deux crates. La macro s'étend en `include_dir::include_dir
 
 Remplacez `src/main.rs` par :
 
-<Code lang="rust" title="src/main.rs" code={`use localizedir::{LocalizeDir, localizedir};
-
-#[localizedir("tests/fixtures/localized")]
-enum AuthDirs {
-    Welcome,
-    ForgotPassword,
-}
-
-fn main() {
-    // Look up the embedded directory for one locale and variant.
-    let dir = AuthDirs::Welcome.to_localized_dir("fr");
-    let note = dir
-                    .get_file(AuthDirs::Welcome.full_path("fr").join("note.txt"))
-                    .expect("note.txt is embedded");
-    println!("fr welcome note: {}", String::from_utf8_lossy(note.contents()));
-
-    // Compile-time metadata: no runtime scanning anywhere.
-    println!("locales: {:?}", AuthDirs::available_locales());
-    println!("parent folder: {}", AuthDirs::parent_folder());
-    println!("welcome dir name: {}", AuthDirs::Welcome.dir_name());
-}`} />
+<Code lang="rust" title="src/main.rs" code={"use localizedir::{LocalizeDir, localizedir};\n\n#[localizedir(\"tests/fixtures/localized\")]\nenum AuthDirs {\n    Welcome,\n    ForgotPassword,\n}\n\nfn main() {\n    // Look up the embedded directory for one locale and variant.\n    let dir = AuthDirs::Welcome.to_localized_dir(\"fr\");\n    let note = dir\n                    .get_file(AuthDirs::Welcome.full_path(\"fr\").join(\"note.txt\"))\n                    .expect(\"note.txt is embedded\");\n    println!(\"fr welcome note: {}\", String::from_utf8_lossy(note.contents()));\n\n    // Compile-time metadata: no runtime scanning anywhere.\n    println!(\"locales: {:?}\", AuthDirs::available_locales());\n    println!(\"parent folder: {}\", AuthDirs::parent_folder());\n    println!(\"welcome dir name: {}\", AuthDirs::Welcome.dir_name());\n}"} />
 
 L'attribut consomme l'énumération, la ré-émet et génère l'implémentation `LocalizeDir`. `AuthDirs` continue de fonctionner comme une énumération simple à tous autres égards.
 
 ## 5. Exécuter et vérifier
 
-<Code lang="bash" title="Terminal" code={`cargo run`} />
+<Code lang="bash" title="Terminal" code={"cargo run"} />
 
 Vous devriez voir une sortie comme celle-ci (l'ordre des locales vient du scan du système de fichiers et est toujours trié) :
 
-<Code lang="ansi" code={`   Compiling demo v0.1.0 (/path/to/demo)
-    Running \`target/debug/demo\`
-fr welcome note: fr:auth:welcome
-locales: ["de", "en", "fr"]
-parent folder: auth
-welcome dir name: welcome`} />
+<Code lang="ansi" code={"   Compiling demo v0.1.0 (/path/to/demo)\n    Running `target/debug/demo`\nfr welcome note: fr:auth:welcome\nlocales: [\"de\", \"en\", \"fr\"]\nparent folder: auth\nwelcome dir name: welcome"} />
 
 Cassez quelque chose exprès pour voir la garantie à la compilation : supprimez `fr/auth/forgot_password/` et relancez `cargo run`. Le build échoue maintenant avec un message listant chaque répertoire `(locale, variant)` manquant et pointant vers l'attribut. Restaurez le répertoire quand vous avez terminé.
 

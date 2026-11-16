@@ -8,11 +8,7 @@ import { Code, LinkCard } from '@astrojs/starlight/components';
 
 L'attribut macro `#[localizedir(...)]` accepte un chemin de base positionnel suivi d'options `key = "value"` séparées par des virgules, optionnelles. Les options peuvent apparaître dans n'importe quel ordre, et une virgule finale est tolérée.
 
-<Code lang="rust" code={`#[localizedir("templates/localized", fallback = "en", parent = "auth", case = "kebab")]
-enum AuthDirs {
-    Welcome,
-    ForgotPassword,
-}`} />
+<Code lang="rust" code={"#[localizedir(\"templates/localized\", fallback = \"en\", parent = \"auth\", case = \"kebab\")]\nenum AuthDirs {\n    Welcome,\n    ForgotPassword,\n}"} />
 
 ## Options
 
@@ -37,12 +33,7 @@ Le chemin de base est conservé exactement tel qu'écrit et retourné textuellem
 
 Les variantes individuelles acceptent un attribut `#[dir_name = "..."]` qui remplace le nom produit par `case` :
 
-<Code lang="rust" code={`#[localizedir("assets/localized")]
-enum MailTemplates {
-    #[dir_name = "welcome_v2"]
-    Welcome,
-    PasswordReset,
-}`} />
+<Code lang="rust" code={"#[localizedir(\"assets/localized\")]\nenum MailTemplates {\n    #[dir_name = \"welcome_v2\"]\n    Welcome,\n    PasswordReset,\n}"} />
 
 Règles :
 

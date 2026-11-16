@@ -12,7 +12,7 @@ This guide shows you how to lay out and place your localized directory tree so t
 
 The macro expects exactly this nesting under your base path:
 
-<Code lang="text" code={`<base path>/<locale>/<parent folder>/<variant directory>/`} />
+<Code lang="text" code={"<base path>/<locale>/<parent folder>/<variant directory>/"} />
 
 - **Locale** — one subdirectory of the base path, discovered by scanning. The name is the exact lookup key at runtime (`fr`, `pt-BR`, …).
 - **Parent folder** — inferred from the enum name (`AuthDirs` → `auth`) unless you override it with `parent = "..."`.
@@ -24,10 +24,7 @@ Every `(locale, variant)` pair must exist before the code compiles. Missing pair
 
 Pass the base path as the first attribute argument. Relative paths anchor at the *crate manifest directory* (`CARGO_MANIFEST_DIR`), not at the compiler's working directory:
 
-<Code lang="rust" code={`#[localizedir("tests/fixtures/localized")] // → $CARGO_MANIFEST_DIR/tests/fixtures/localized
-enum AuthDirs {
-    Welcome,
-}`} />
+<Code lang="rust" code={"#[localizedir(\"tests/fixtures/localized\")] // \u2192 $CARGO_MANIFEST_DIR/tests/fixtures/localized\nenum AuthDirs {\n    Welcome,\n}"} />
 
 This anchoring is what makes the macro reliable inside cargo workspaces, where the compiler's working directory is the workspace root rather than the package root. Absolute paths are used as-is.
 
@@ -57,15 +54,7 @@ Files directly under the base path are ignored during discovery, but the whole b
 
 Base paths support `$VAR` interpolation with the same rules as `include_dir!`: a `$` followed by ASCII letters, digits, or underscores names one variable, which is looked up once with no recursive expansion.
 
-<Code lang="rust" code={`#[localizedir("$CARGO_MANIFEST_DIR/locales")]
-enum AuthDirs {
-    Welcome,
-}
-
-#[localizedir("$TEMPLATE_ROOT/auth")]
-enum MailDirs {
-    Welcome,
-}`} />
+<Code lang="rust" code={"#[localizedir(\"$CARGO_MANIFEST_DIR/locales\")]\nenum AuthDirs {\n    Welcome,\n}\n\n#[localizedir(\"$TEMPLATE_ROOT/auth\")]\nenum MailDirs {\n    Welcome,\n}"} />
 
 An unset variable fails the compile with a message naming the variable and the attribute that used it, so a misconfigured CI machine surfaces immediately instead of embedding the wrong tree.
 
@@ -73,16 +62,7 @@ An unset variable fails the compile with a message naming the variable and the a
 
 Multiple enums can point at the same base path with different `parent` folders:
 
-<Code lang="rust" code={`#[localizedir("locales", parent = "auth")]
-enum AuthDirs {
-    Welcome,
-    ForgotPassword,
-}
-
-#[localizedir("locales", parent = "email")]
-enum MailDirs {
-    Newsletter,
-}`} />
+<Code lang="rust" code={"#[localizedir(\"locales\", parent = \"auth\")]\nenum AuthDirs {\n    Welcome,\n    ForgotPassword,\n}\n\n#[localizedir(\"locales\", parent = \"email\")]\nenum MailDirs {\n    Newsletter,\n}"} />
 
 Both enums embed the same tree once and navigate it independently.
 
