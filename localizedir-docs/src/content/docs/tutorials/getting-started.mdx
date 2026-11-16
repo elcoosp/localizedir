@@ -17,7 +17,7 @@ This tutorial walks you through your first `localizedir` enum, from an empty cra
 
 Start from a fresh binary crate:
 
-<Code lang="bash" code={`cargo new demo && cd demo`} />
+<Code lang="bash" title="Terminal" code={`cargo new demo && cd demo`} />
 
 ## 2. Prepare the localized directory tree
 
@@ -51,7 +51,7 @@ Put distinguishable content in each file — for example `en:auth:welcome` in `e
 
 <Tabs>
   <TabItem label="cargo add">
-<Code lang="bash" code={` cargo add localizedir@0.2 include_dir@0.7`} />
+<Code lang="bash" title="Terminal" code={` cargo add localizedir@0.2 include_dir@0.7`} />
   </TabItem>
   <TabItem label="Cargo.toml">
 <Code lang="toml" code={`  [dependencies]
@@ -68,7 +68,7 @@ You need both crates. The macro expands to `include_dir::include_dir!(...)`, whi
 
 Replace `src/main.rs` with:
 
-<Code lang="rust" code={`use localizedir::{LocalizeDir, localizedir};
+<Code lang="rust" title="src/main.rs" code={`use localizedir::{LocalizeDir, localizedir};
 
 #[localizedir("tests/fixtures/localized")]
 enum AuthDirs {
@@ -94,7 +94,7 @@ The attribute consumes the enum, re-emits it, and generates the `LocalizeDir` im
 
 ## 5. Run and verify
 
-<Code lang="bash" code={`cargo run`} />
+<Code lang="bash" title="Terminal" code={`cargo run`} />
 
 You should see output like this (locale order comes from the filesystem scan and is always sorted):
 

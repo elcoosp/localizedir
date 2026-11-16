@@ -12,7 +12,7 @@ import { Aside, Code, LinkCard } from '@astrojs/starlight/components';
 
 The macro expands to `include_dir::include_dir!(...)`, which resolves in *your* crate — not inside the `localizedir` crate. Your `Cargo.toml` therefore lists both:
 
-<Code lang="toml" code={`[dependencies]
+<Code lang="toml" title="Cargo.toml" code={`[dependencies]
 localizedir = "0.2"
 include_dir = "0.7"`} />
 

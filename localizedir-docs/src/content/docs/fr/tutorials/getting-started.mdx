@@ -17,7 +17,7 @@ Ce tutoriel vous guide à travers votre première énumération `localizedir`, d
 
 Partez d'un crate binaire frais :
 
-<Code lang="bash" code={`cargo new demo && cd demo`} />
+<Code lang="bash" title="Terminal" code={`cargo new demo && cd demo`} />
 
 ## 2. Préparer l'arbre de répertoires localisés
 
@@ -51,7 +51,7 @@ Mettez du contenu distinguable dans chaque fichier — par exemple `en:auth:welc
 
 <Tabs>
   <TabItem label="cargo add">
-<Code lang="bash" code={` cargo add localizedir@0.2 include_dir@0.7`} />
+<Code lang="bash" title="Terminal" code={` cargo add localizedir@0.2 include_dir@0.7`} />
   </TabItem>
   <TabItem label="Cargo.toml">
 <Code lang="toml" code={`  [dependencies]
@@ -68,7 +68,7 @@ Vous avez besoin des deux crates. La macro s'étend en `include_dir::include_dir
 
 Remplacez `src/main.rs` par :
 
-<Code lang="rust" code={`use localizedir::{LocalizeDir, localizedir};
+<Code lang="rust" title="src/main.rs" code={`use localizedir::{LocalizeDir, localizedir};
 
 #[localizedir("tests/fixtures/localized")]
 enum AuthDirs {
@@ -94,7 +94,7 @@ L'attribut consomme l'énumération, la ré-émet et génère l'implémentation 
 
 ## 5. Exécuter et vérifier
 
-<Code lang="bash" code={`cargo run`} />
+<Code lang="bash" title="Terminal" code={`cargo run`} />
 
 Vous devriez voir une sortie comme celle-ci (l'ordre des locales vient du scan du système de fichiers et est toujours trié) :
 
