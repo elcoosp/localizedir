@@ -50,7 +50,7 @@ The returned `&'static Dir<'static>` is a plain `include_dir::Dir`, so everythin
 | `file.contents_utf8()` | The file bytes as `&'static str`, when valid UTF-8. |
 
 <Aside type="note">
-Because contents are `'static` slices into the binary, you can hand them to parsers, caches, or ` &'static str`-expecting APIs without copying.
+Because contents are `'static` slices into the binary, you can hand them to parsers, caches, or `&'static str`-expecting APIs without copying.
 </Aside>
 
 ## Next steps

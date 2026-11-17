@@ -1,24 +1,24 @@
 :root {
-	--sl-color-accent-low: hsl(45 81% 93%);
-	--sl-color-accent: hsl(45 81% 35%);
-	--sl-color-accent-high: hsl(45 81% 28%);
+  --sl-color-accent-low: hsl(45 81% 93%);
+  --sl-color-accent: hsl(45 81% 35%);
+  --sl-color-accent-high: hsl(45 81% 28%);
 }
 
 :root,
 :root[data-theme='dark'] {
-	/* Dark mode — golden amber from the localizedir logo (#f0c010), tuned for
+  /* Dark mode — golden amber from the localizedir logo (#f0c010), tuned for
 	 contrast on Starlight's dark background. Verified with scripts/contrast.py:
 	 accent-high text on #0b0c0e ≈ 12.8:1; accent-low stays a subtle tint. */
-	--sl-color-accent-low: hsl(45 81% 16%);
-	--sl-color-accent: hsl(45 81% 60%);
-	--sl-color-accent-high: hsl(45 81% 75%);
+  --sl-color-accent-low: hsl(45 81% 16%);
+  --sl-color-accent: hsl(45 81% 60%);
+  --sl-color-accent-high: hsl(45 81% 75%);
 }
 
 :root[data-theme='light'] {
-	/* Light mode — the same brand hue darkened until it passes WCAG AA in both
+  /* Light mode — the same brand hue darkened until it passes WCAG AA in both
 	 directions: as link text on white (6.0:1) and under white text when used
 	 as a background (6.0:1). */
-	--sl-color-accent-low: hsl(44, 100%, 90%);
-	--sl-color-accent: hsl(35, 84%, 30%);
-	--sl-color-accent-high: hsl(36, 80%, 34%);
+  --sl-color-accent-low: hsl(44, 100%, 90%);
+  --sl-color-accent: hsl(35, 84%, 30%);
+  --sl-color-accent-high: hsl(36, 80%, 34%);
 }
