@@ -1,0 +1,21 @@
+# Curated domain glossary for @elcoosp/docs-toolkit (starlight-term-glossary)
+- term: "compile-time discovery"
+  locale: en
+  href: "/explanation/how-it-works/"
+  definition: "Macro expansion step scanning the filesystem during compilation so missing locale folders fail at build time."
+- term: "option-first lookup"
+  locale: en
+  href: "/explanation/design-decisions/"
+  definition: "Non-panicking API design returning Option<&File> for unknown locale keys while isolating fallbacks to explicit methods."
+- term: "fallback locale"
+  locale: en
+  href: "/guides/handle-unknown-locales/"
+  definition: "Default locale returned when a requested locale key is absent, configured explicitly without implicit runtime normalization."
+- term: "découverte de locales"
+  locale: fr
+  href: "/fr/explanation/how-it-works/"
+  definition: "Analyse des dossiers de traduction pendant la compilation afin de transformer toute locale manquante en erreur de build."
+- term: "fallback"
+  locale: fr
+  href: "/fr/guides/handle-unknown-locales/"
+  definition: "Locale par défaut renvoyée explicitement lorsqu’une clé demandée est absente, sans normalisation implicite."
