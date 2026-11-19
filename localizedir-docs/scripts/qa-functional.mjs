@@ -11,7 +11,7 @@ const out = {};
 await page.goto('http://localhost:4321/', { waitUntil: 'networkidle' });
 await page.keyboard.press('Control+k');
 await page.waitForTimeout(400);
-const dialogVisible = await page.locator("[role='dialog'], .search-panel, starlight-menu-button").count();
+await page.locator("[role='dialog'], .search-panel, starlight-menu-button").count();
 await page.keyboard.type('fallback');
 await page.waitForTimeout(900);
 out.searchResults = await page.evaluate(() => {

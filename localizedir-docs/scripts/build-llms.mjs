@@ -56,25 +56,25 @@ function extractDescription(html) {
 function extractMain(html) {
   const m = html.match(/<main[^>]*>([\s\S]*?)<\/main>/i);
   if (!m) return '';
-  let text = m[1]
-    .replace(/<(script|style|nav|aside)[\s\S]*?<\/\1>/gi, ' ')
-    .replace(/<\/(p|h1|h2|h3|h4|h5|h6|li|tr|div|pre|blockquote)>/gi, '\n')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/[ \t]+/g, ' ')
-    .replace(/\n{3,}/g, '\n\n');
+  const text = m[1]
+    .replaceAll(/<(script|style|nav|aside)[\s\S]*?<\/\1>/gi, ' ')
+    .replaceAll(/<\/(p|h1|h2|h3|h4|h5|h6|li|tr|div|pre|blockquote)>/gi, '\n')
+    .replaceAll(/<br\s*\/?>/gi, '\n')
+    .replaceAll(/<[^>]+>/g, ' ')
+    .replaceAll('&amp;', '&')
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll(/[ \t]+/g, ' ')
+    .replaceAll(/\n{3,}/g, '\n\n');
   return text.trim();
 }
 
 function stripTags(html) {
   return html
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replaceAll(/<[^>]+>/g, ' ')
+    .replaceAll(/\s+/g, ' ')
     .trim();
 }
 
