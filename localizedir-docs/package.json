@@ -2,7 +2,7 @@
   "name": "localizedir-docs",
   "version": "0.2.0",
   "private": true,
-  "description": "Documentation site for localizedir — compile-time localized directory inclusion for Rust",
+  "description": "Documentation site for localizedir \u2014 compile-time localized directory inclusion for Rust",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@astrojs/starlight": "^0.43.1",
-    "@elcoosp/docs-toolkit": "^1.6.13",
+    "@elcoosp/docs-toolkit": "^1.7.0",
     "astro": "^7.4.13"
   },
   "devDependencies": {
