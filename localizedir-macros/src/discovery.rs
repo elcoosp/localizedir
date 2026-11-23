@@ -330,6 +330,28 @@ mod tests {
         assert!(error.contains("is not a directory"), "{error}");
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn discover_locales_reports_unreadable_directory() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let temp = TempDir::new().expect("tempdir");
+        let dir = temp.path().join("unreadable");
+        fs::create_dir(&dir).expect("create dir");
+        // Remove read permissions for owner
+        let mut perms = fs::metadata(&dir).expect("metadata").permissions();
+        perms.set_mode(0o000);
+        fs::set_permissions(&dir, perms).expect("set permissions");
+
+        let error = discover_locales(&dir).unwrap_err();
+        assert!(error.contains("cannot read base path"), "{error}");
+
+        // Restore permissions so tempdir cleanup works
+        let mut perms = fs::metadata(&dir).expect("metadata").permissions();
+        perms.set_mode(0o700);
+        fs::set_permissions(&dir, perms).ok();
+    }
+
     #[test]
     fn discover_locales_reports_empty_directory() {
         let temp = TempDir::new().expect("tempdir");

@@ -426,6 +426,28 @@ mod tests {
     }
 
     #[test]
+    fn explicit_discriminants_are_preserved() {
+        let temp = tempfile::TempDir::new().expect("tempdir");
+        let base = temp.path().join("locales");
+        make_tree(
+            &base,
+            &["de", "en", "fr"],
+            "auth",
+            &["welcome", "forgot_password"],
+        );
+
+        let output = expand_with(
+            &temp_base(r#""{{BASE}}""#, temp.path().join("locales").as_path()),
+            "enum AuthDirs { Welcome = 1, ForgotPassword = 2 }",
+        )
+        .expect("expands");
+
+        // Check that discriminants are preserved in the generated enum
+        assert!(output.contains("Welcome = 1"), "{output}");
+        assert!(output.contains("ForgotPassword = 2"), "{output}");
+    }
+
+    #[test]
     fn fallback_generates_override() {
         let temp = tempfile::TempDir::new().expect("tempdir");
         let base = temp.path().join("locales");
